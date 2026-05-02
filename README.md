@@ -6,7 +6,7 @@ Este proyecto es mi centro de mando personal para mi formación en el AIEP. No e
 Actualmente domino la lógica básica en Python (bucles, listas y condicionales). El diseño avanzado y la arquitectura actual han sido co-creados con IA, actuando yo como Product Manager y diseñador de la visión.
 
 ## 🎯 El Compromiso
-Mi meta es que, al finalizar mi ingeniería, este código sea 100% propio. Este repositorio documenta la transición de "tener la idea" a "dominar la ejecución".
+Mi meta es que, al finalizar mi ingeniería, este código sea 100% propio. Este repositorio documenta la transición de ello.
 
 ### Metas actuales:
 - Finalizar la integración del material de AWS Cloud Practitioner.
