@@ -10,3 +10,5 @@ __pycache__/
 .DS_Store
 
 PPT*.txt
+
+_raw_materials/

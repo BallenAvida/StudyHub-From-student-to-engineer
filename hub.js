@@ -1,54 +1,44 @@
-const COURSES = [
-    {
-        id:          'modelos-negocios',
-        name:        'Modelos de Negocios',
-        description: 'Requerimientos, Agile, BPMN y UML',
-        icon:        'fa-chart-line',
-        color:       '#60a5fa',
-        colorBg:     'rgba(59, 130, 246, 0.2)',
-        accentColor: '#3b82f6',
-        path:        'cursos/modelos-negocios/index.html',
-        semester:    'Sem. 1',
-        tests:       ['test1', 'test2', 'test3'],
-        locked:      false
-    },
-    {
-        id:          'aws-cloud-practitioner',
-        name:        'AWS Cloud Practitioner',
-        description: 'Conceptos, Cómputo, Seguridad y Redes',
-        icon:        'fa-aws',
-        color:       '#f59e0b',
-        colorBg:     'rgba(245, 158, 11, 0.2)',
-        accentColor: '#f59e0b',
-        path:        'cursos/aws-cloud-practitioner/index.html',
-        semester:    'Certificación',
-        tests:       ['aws_part1'],
-        locked:      false
-    },
-    {
-        id:          'placeholder-1',
-        name:        'Próxima Materia',
-        description: 'Agrega tu próximo curso cuando empiece el semestre.',
-        icon:        'fa-plus',
-        color:       '#94a3b8',
-        colorBg:     'rgba(148, 163, 184, 0.1)',
-        accentColor: 'transparent',
-        path:        null,
-        semester:    '',
-        tests:       [],
-        locked:      true
-    }
-];
+const hubApp = {
+    currentCourse: null,
+    currentTestId: null,
+    currentTestQuestions: [],
+    currentQuestionIndex: 0,
+    testScore: 0,
 
-const hub = {
     init() {
         this.setupNavigation();
         this.setupCalendar();
+        this.setupUploader();
         this.setGreeting();
         this.loadGlobalStats();
-        this.renderQuickResume();
         this.renderCourses();
         this.renderCalendar();
+    },
+
+    setupUploader() {
+        const uploader = document.getElementById('courseUploader');
+        if (!uploader) return;
+        uploader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const coursePack = JSON.parse(event.target.result);
+                    if (!coursePack.id || !coursePack.title) throw new Error("Invalid format");
+                    
+                    if (EngineStorage.savePack(coursePack)) {
+                        alert(`¡Curso "${coursePack.title}" importado con éxito!`);
+                        this.renderCourses();
+                    }
+                } catch (err) {
+                    alert("Error al importar: El archivo no tiene el formato Course Pack válido.");
+                }
+                uploader.value = ''; // Reset
+            };
+            reader.readAsText(file);
+        });
     },
 
     setupCalendar() {
@@ -56,6 +46,8 @@ const hub = {
         const form = document.getElementById('event-form');
         const addButtons = document.querySelectorAll('.btn-add-event');
         const closeButtons = document.querySelectorAll('.close-modal');
+
+        if (!modal) return;
 
         addButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -92,6 +84,8 @@ const hub = {
         const eventList = document.getElementById('calendar-event-list');
         const actions = document.getElementById('calendar-active-actions');
 
+        if (!emptyState) return;
+
         if (events.length === 0) {
             emptyState.classList.remove('hidden');
             eventList.classList.add('hidden');
@@ -103,14 +97,12 @@ const hub = {
         eventList.classList.remove('hidden');
         actions.classList.remove('hidden');
 
-        // Sort events by date
         events.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         eventList.innerHTML = events.map(event => {
             const date = new Date(event.date);
-            const day = date.getDate() + 1; // Correction for UTC
+            const day = date.getDate() + 1;
             const month = date.toLocaleDateString('es-ES', { month: 'short' });
-            
             return `
                 <div class="event-item">
                     <div class="event-date-box">
@@ -128,114 +120,125 @@ const hub = {
 
     setupNavigation() {
         const navItems = document.querySelectorAll('.nav-item[data-target]');
-        const views = document.querySelectorAll('.dashboard-view');
-
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                
-                // Update active nav item
                 navItems.forEach(nav => nav.classList.remove('active'));
-                
-                // If it's "Mis Cursos", we activate the first item (Inicio) visually but maybe it scrolls, 
-                // for now let's just activate the clicked item
                 item.classList.add('active');
-
-                // Switch view
-                const targetId = item.getAttribute('data-target');
-                views.forEach(view => {
-                    if (view.id === targetId) {
-                        view.classList.remove('hidden');
-                        view.classList.add('active');
-                    } else {
-                        view.classList.add('hidden');
-                        view.classList.remove('active');
-                    }
-                });
-
-                // Smooth scroll to courses if "Mis Cursos" was clicked
-                if (item.querySelector('span').textContent === 'Mis Cursos') {
-                    const grid = document.getElementById('courses-grid');
-                    if (grid) grid.scrollIntoView({ behavior: 'smooth' });
-                }
+                this.switchView(item.getAttribute('data-target'));
             });
         });
     },
 
+    switchView(viewId) {
+        const views = document.querySelectorAll('.dashboard-view');
+        views.forEach(view => {
+            if (view.id === viewId) {
+                view.classList.remove('hidden');
+                view.classList.add('active');
+            } else {
+                view.classList.add('hidden');
+                view.classList.remove('active');
+            }
+        });
+    },
+
+    goHome() {
+        this.switchView('view-inicio');
+        document.querySelector('.nav-item[data-target="view-inicio"]').classList.add('active');
+        this.renderCourses();
+    },
+
+    goCourseMenu() {
+        this.switchView('view-course-menu');
+    },
+
     setGreeting() {
-        const h     = new Date().getHours();
+        const h = new Date().getHours();
         const global = HubStorage.getGlobal();
         const streak = global.streak ? global.streak.count : 0;
 
         let greeting;
-        if      (h >= 5  && h < 12) greeting = '¡Buenos días!';
+        if (h >= 5 && h < 12) greeting = '¡Buenos días!';
         else if (h >= 12 && h < 19) greeting = '¡Buenas tardes!';
-        else                         greeting = '¡Buenas noches!';
+        else greeting = '¡Buenas noches!';
 
-        let sub;
-        if (streak >= 7)       sub = `🔥 ¡${streak} días de racha! Imparable.`;
-        else if (streak >= 2)  sub = `Llevas ${streak} días seguidos. ¡Sigue así!`;
-        else                   sub = 'Tu hub de estudio personal.';
-
-        document.getElementById('hub-greeting').textContent  = greeting;
-        document.getElementById('hub-subgreeting').textContent = sub;
+        const greetingEl = document.getElementById('hub-greeting');
+        if (greetingEl) greetingEl.textContent = greeting;
+        
+        const subEl = document.getElementById('hub-subgreeting');
+        if (subEl) subEl.textContent = streak >= 2 ? `🔥 ¡${streak} días de racha! Sigue así.` : 'Tu hub de estudio personal.';
     },
 
     loadGlobalStats() {
-        const global  = HubStorage.getGlobal();
-        const streak   = global.streak ? global.streak.count : 0;
+        const global = HubStorage.getGlobal();
+        const streak = global.streak ? global.streak.count : 0;
         const sessions = global.totalSessions || 0;
 
-        document.getElementById('stat-streak').textContent   = streak;
-        document.getElementById('stat-sessions').textContent = sessions;
+        const statStreak = document.getElementById('stat-streak');
+        if(statStreak) statStreak.textContent = streak;
 
-        const analyticsStreak = document.getElementById('analytics-streak');
-        if (analyticsStreak) analyticsStreak.textContent = streak + ' días';
-        
-        const analyticsSessions = document.getElementById('analytics-sessions');
-        if (analyticsSessions) analyticsSessions.textContent = sessions + ' completadas';
+        const statSessions = document.getElementById('stat-sessions');
+        if(statSessions) statSessions.textContent = sessions;
 
         const badge = document.getElementById('streak-badge');
-        if (streak > 0) {
+        if (badge && streak > 0) {
             document.getElementById('streak-badge-num').textContent = streak;
             badge.classList.remove('hidden');
         }
     },
 
-    renderQuickResume() {
-        let lastCourse = null;
+    renderCourses() {
+        const packs = EngineStorage.getAllPacks();
+        const grid = document.getElementById('courses-grid');
+        const emptyState = document.getElementById('empty-courses-state');
+        
+        if (!grid) return;
+
+        if (packs.length === 0) {
+            grid.innerHTML = '';
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            grid.innerHTML = packs.map(pack => this.buildCard(pack)).join('');
+        }
+        
+        this.renderQuickResume(packs);
+    },
+
+    renderQuickResume(packs) {
+        let lastCourseId = null;
         let lastTime = 0;
 
-        COURSES.forEach(c => {
-            if (c.locked) return;
-            const data = HubStorage.getCourse(c.id);
+        packs.forEach(pack => {
+            const data = HubStorage.getCourse(pack.id);
             if (data && data.lastStudied) {
-                const t = new Date(data.lastStudied).getTime();
-                if (t > lastTime) {
-                    lastTime = t;
-                    lastCourse = c;
+                if (data.lastStudied > lastTime) {
+                    lastTime = data.lastStudied;
+                    lastCourseId = pack.id;
                 }
             }
         });
 
-        if (!lastCourse) {
-            lastCourse = COURSES.find(c => !c.locked);
+        const container = document.getElementById('quick-resume-container');
+        if (!container) return;
+
+        if (!lastCourseId && packs.length > 0) lastCourseId = packs[0].id;
+
+        if (!lastCourseId) {
+            container.innerHTML = '';
+            return;
         }
 
-        const container = document.getElementById('quick-resume-container');
-        if (!container || !lastCourse) return;
-
+        const lastPack = packs.find(p => p.id === lastCourseId);
         container.innerHTML = `
-            <div class="quick-resume-card">
+            <div class="quick-resume-card" style="--card-accent: ${lastPack.theme.primary}">
                 <div class="qr-content">
-                    <div class="qr-label">
-                        <i class="fa-solid fa-bolt"></i> Continuar Estudiando
-                    </div>
-                    <h3 class="qr-title">${lastCourse.name}</h3>
-                    <p class="qr-desc">Retoma donde lo dejaste y mantén tu racha activa.</p>
+                    <div class="qr-label"><i class="fa-solid fa-bolt"></i> Continuar Estudiando</div>
+                    <h3 class="qr-title">${lastPack.title}</h3>
                 </div>
                 <div class="qr-action">
-                    <button class="qr-btn" onclick="hub.enterCourse('${lastCourse.id}')">
+                    <button class="qr-btn" onclick="hubApp.enterCourse('${lastPack.id}')">
                         Continuar <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
@@ -243,88 +246,52 @@ const hub = {
         `;
     },
 
-    renderCourses() {
-        const grid = document.getElementById('courses-grid');
-        grid.innerHTML = COURSES.map(c => this.buildCard(c)).join('');
-    },
-
-    buildCard(course) {
-        if (course.locked) {
-            return `
-            <div class="course-card locked" style="--card-accent: ${course.accentColor}">
-                <div class="course-card-header">
-                    <div class="course-card-icon" style="background:${course.colorBg};color:${course.color}">
-                        <i class="fa-solid ${course.icon}"></i>
-                    </div>
-                </div>
-                <div class="course-name">${course.name}</div>
-                <div class="course-desc">${course.description}</div>
-                <div class="lock-overlay">
-                    <i class="fa-solid fa-lock"></i>
-                    <span>Próximamente</span>
-                </div>
-            </div>`;
-        }
-
-        const data  = HubStorage.getCourse(course.id);
-        const total = course.tests.length;
-        let bestScore      = null;
+    buildCard(pack) {
+        const data = HubStorage.getCourse(pack.id);
+        const moduleKeys = Object.keys(pack.modules || {});
+        const total = moduleKeys.length;
+        
         let testsAttempted = 0;
+        let bestScore = null;
 
-        course.tests.forEach(tid => {
+        moduleKeys.forEach(tid => {
             const t = data.tests[tid];
             if (t && t.attempts > 0) {
                 testsAttempted++;
-                if (t.bestScore !== null && (bestScore === null || t.bestScore > bestScore))
-                    bestScore = t.bestScore;
+                if (t.bestScore !== null && (bestScore === null || t.bestScore > bestScore)) bestScore = t.bestScore;
             }
         });
 
-        const progressPct  = total > 0 ? Math.round((testsAttempted / total) * 100) : 0;
-        const lastStudied  = data.lastStudied ? this.formatDate(new Date(data.lastStudied)) : 'Nunca';
-        const bestDisplay  = bestScore !== null ? `${bestScore}%` : '--';
+        const progressPct = total > 0 ? Math.round((testsAttempted / total) * 100) : 0;
+        const bestDisplay = bestScore !== null ? `${bestScore}%` : '--';
         const testsDisplay = `${testsAttempted}/${total}`;
-        const progressText = testsAttempted === 0
-            ? 'Aún no has realizado ningún test'
-            : `${testsAttempted} de ${total} tests completados`;
 
         return `
-        <div class="course-card active" style="--card-accent:${course.accentColor}"
-             onclick="hub.enterCourse('${course.id}')">
+        <div class="course-card active" style="--card-accent:${pack.theme.primary}" onclick="hubApp.enterCourse('${pack.id}')">
             <div class="course-card-header">
-                <div class="course-card-icon" style="background:${course.colorBg};color:${course.color}">
-                    <i class="fa-solid ${course.icon}"></i>
-                </div>
-                <div class="course-meta">
-                    ${course.semester ? `<span class="course-semester">${course.semester}</span>` : ''}
-                    <span class="course-last-studied">Último: ${lastStudied}</span>
+                <div class="course-card-icon" style="background:${pack.theme.background};color:${pack.theme.primary}">
+                    <i class="fa-solid fa-book"></i>
                 </div>
             </div>
-            <div class="course-name">${course.name}</div>
-            <div class="course-desc">${course.description}</div>
+            <div class="course-name">${pack.title}</div>
+            <div class="course-desc">${total} módulos de estudio disponibles.</div>
             <div class="course-stats-row">
                 <div class="course-stat">
                     <span class="course-stat-value">${bestDisplay}</span>
-                    <span class="course-stat-label">Mejor puntaje</span>
+                    <span class="course-stat-label">Mejor</span>
                 </div>
                 <div class="course-stat">
                     <span class="course-stat-value">${testsDisplay}</span>
                     <span class="course-stat-label">Tests</span>
                 </div>
-                <div class="course-stat">
-                    <span class="course-stat-value">${lastStudied}</span>
-                    <span class="course-stat-label">Último estudio</span>
-                </div>
             </div>
             <div class="course-progress-wrap">
                 <div class="course-progress-track">
-                    <div class="course-progress-fill"
-                         style="width:${progressPct}%;background:${course.color}"></div>
+                    <div class="course-progress-fill" style="width:${progressPct}%;background:${pack.theme.primary}"></div>
                 </div>
-                <span class="course-progress-text">${progressText}</span>
             </div>
             <div class="course-card-footer">
-                <button class="btn primary">
+                <button class="btn primary" style="background:${pack.theme.primary}">
                     Entrar <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
@@ -332,21 +299,141 @@ const hub = {
     },
 
     enterCourse(courseId) {
-        const course = COURSES.find(c => c.id === courseId);
-        if (course && course.path) window.location.href = course.path;
+        const pack = EngineStorage.getPack(courseId);
+        if (!pack) return;
+
+        this.currentCourse = pack;
+        document.getElementById('current-course-title').textContent = pack.title;
+        
+        // Render Modules
+        const container = document.getElementById('course-modules-container');
+        const modules = pack.modules || {};
+        
+        container.innerHTML = Object.keys(modules).map(key => {
+            const mod = modules[key];
+            const data = HubStorage.getCourse(courseId);
+            const tData = data.tests[key];
+            const best = tData && tData.bestScore !== null ? tData.bestScore + '%' : '--';
+            
+            return `
+            <div class="card" onclick="hubApp.startTest('${key}')" style="cursor: pointer;">
+                <div class="card-icon test-icon" style="color: ${pack.theme.primary}"><i class="fa-solid fa-laptop-code"></i></div>
+                <div class="card-content">
+                    <h4>${mod.title || key}</h4>
+                    <p>${mod.questions ? mod.questions.length : 0} Preguntas | Mejor: ${best}</p>
+                </div>
+            </div>`;
+        }).join('');
+
+        this.switchView('view-course-menu');
+        HubStorage.recordSession(courseId);
     },
 
-    formatDate(date) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const d = new Date(date);
-        d.setHours(0, 0, 0, 0);
-        const diff = Math.round((today - d) / 86400000);
-        if (diff === 0) return 'Hoy';
-        if (diff === 1) return 'Ayer';
-        if (diff < 7)   return `Hace ${diff} días`;
-        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    // --- TEST LOGIC ---
+
+    startTest(testId) {
+        if (!this.currentCourse || !this.currentCourse.modules[testId]) return;
+        
+        this.currentTestId = testId;
+        const testData = this.currentCourse.modules[testId];
+        
+        document.getElementById('test-title').textContent = testData.title || testId;
+        this.currentTestQuestions = [...(testData.questions || [])].sort(() => Math.random() - 0.5);
+        this.currentQuestionIndex = 0;
+        this.testScore = 0;
+
+        document.getElementById('test-total').textContent = this.currentTestQuestions.length;
+        
+        this.switchView('view-test');
+        this.renderQuestion();
+    },
+
+    renderQuestion() {
+        if (this.currentQuestionIndex >= this.currentTestQuestions.length) {
+            this.finishTest();
+            return;
+        }
+
+        const q = this.currentTestQuestions[this.currentQuestionIndex];
+        document.getElementById('test-current').textContent = this.currentQuestionIndex + 1;
+        document.getElementById('test-q-topic').textContent = q.topic || 'General';
+        document.getElementById('test-q-text').textContent = q.question;
+
+        const optionsHtml = q.options.map((opt, index) => `
+            <div class="option" onclick="hubApp.selectOption(${index})" id="opt-${index}">
+                <div class="option-letter">${String.fromCharCode(65 + index)}</div>
+                <div class="option-text">${opt}</div>
+            </div>
+        `).join('');
+        
+        document.getElementById('test-q-options').innerHTML = optionsHtml;
+        
+        const feedbackBox = document.getElementById('test-q-feedback');
+        feedbackBox.className = 'feedback-box hidden';
+        feedbackBox.innerHTML = '';
+        
+        document.getElementById('btn-test-next').classList.add('hidden');
+    },
+
+    selectOption(index) {
+        if (!document.getElementById('btn-test-next').classList.contains('hidden')) return;
+
+        const q = this.currentTestQuestions[this.currentQuestionIndex];
+        const options = document.querySelectorAll('.option');
+        const feedbackBox = document.getElementById('test-q-feedback');
+        
+        options.forEach(opt => opt.style.pointerEvents = 'none');
+        
+        let explanationHtml = q.explanation ? `<div class="explanation-text">${q.explanation}</div>` : '';
+        
+        if (index === q.correct) {
+            options[index].classList.add('correct');
+            this.testScore++;
+            feedbackBox.className = 'feedback-box success';
+            feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-check-circle"></i></div><div class="feedback-text"><strong>¡Correcto!</strong>${explanationHtml}</div>`;
+        } else {
+            options[index].classList.add('incorrect');
+            options[q.correct].classList.add('correct');
+            feedbackBox.className = 'feedback-box error';
+            feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-xmark-circle"></i></div><div class="feedback-text"><strong>Incorrecto.</strong>${explanationHtml}</div>`;
+        }
+        
+        document.getElementById('btn-test-next').classList.remove('hidden');
+    },
+
+    nextQuestion() {
+        this.currentQuestionIndex++;
+        this.renderQuestion();
+    },
+
+    finishTest() {
+        const total = this.currentTestQuestions.length;
+        const pct = total > 0 ? Math.round((this.testScore / total) * 100) : 0;
+        
+        HubStorage.saveTestResult(this.currentCourse.id, this.currentTestId, this.testScore, total);
+        
+        document.getElementById('score-message').textContent = \`Puntaje: \${this.testScore} de \${total} (\${pct}%)\`;
+        
+        let phrase = '¡Sigue practicando!';
+        if (pct >= 90) phrase = '¡Excelente! Tienes dominio total.';
+        else if (pct >= 70) phrase = '¡Muy buen trabajo!';
+        
+        document.getElementById('score-phrase').textContent = phrase;
+        
+        this.switchView('view-results');
+        this.loadGlobalStats(); // Update streak UI
+    },
+
+    readTestAloud() {
+        if (!('speechSynthesis' in window)) return;
+        const q = this.currentTestQuestions[this.currentQuestionIndex];
+        if (!q) return;
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(q.question);
+        msg.lang = 'es-ES';
+        msg.rate = 1.1;
+        window.speechSynthesis.speak(msg);
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => hub.init());
+document.addEventListener('DOMContentLoaded', () => hubApp.init());

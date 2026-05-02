@@ -1,3 +1,36 @@
+const EngineStorage = {
+    PACKS_KEY: 'studyhub_engine_packs',
+    
+    getAllPacks() {
+        try {
+            const data = localStorage.getItem(this.PACKS_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error("Error reading packs", e);
+            return [];
+        }
+    },
+    
+    getPack(id) {
+        return this.getAllPacks().find(c => c.id === id);
+    },
+    
+    savePack(pack) {
+        const packs = this.getAllPacks();
+        const index = packs.findIndex(c => c.id === pack.id);
+        if (index !== -1) packs[index] = pack;
+        else packs.push(pack);
+        
+        try {
+            localStorage.setItem(this.PACKS_KEY, JSON.stringify(packs));
+            return true;
+        } catch (e) {
+            alert("Error: No se pudo guardar el curso. Probablemente excede el límite del navegador.");
+            return false;
+        }
+    }
+};
+
 const HubStorage = {
     COURSES_KEY: 'studyhub_courses',
     GLOBAL_KEY:  'studyhub_global',

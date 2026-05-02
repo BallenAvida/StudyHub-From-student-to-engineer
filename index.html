@@ -103,20 +103,92 @@
                         </div>
                     </div>
 
-                    <!-- Quick Resume Widget -->
-                    <div id="quick-resume-container" class="quick-resume-container">
-                        <!-- Rendered by hub.js -->
+                    <div class="section-header mt-4" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 class="section-label">
+                                <i class="fa-solid fa-layer-group"></i> Mis Materias
+                            </h3>
+                            <p class="section-sub">Selecciona una materia para estudiar</p>
+                        </div>
+                        <button class="btn primary" onclick="document.getElementById('courseUploader').click()">
+                            <i class="fa-solid fa-file-import"></i> Importar Curso (.json)
+                        </button>
+                        <input type="file" id="courseUploader" accept=".json" style="display: none;">
                     </div>
 
-                    <div class="section-header mt-4">
-                        <h3 class="section-label">
-                            <i class="fa-solid fa-layer-group"></i> Mis Materias
-                        </h3>
-                        <p class="section-sub">Selecciona una materia para estudiar</p>
+                    <div id="empty-courses-state" class="glass-panel hidden" style="text-align: center; padding: 4rem 2rem; margin-top: 2rem;">
+                        <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <h3 style="margin-bottom: 0.5rem">Aún no tienes cursos</h3>
+                        <p style="color: var(--text-secondary)">Importa un archivo .json con el contenido de tu curso para comenzar a estudiar.</p>
+                        <button class="btn primary mt-4" style="margin: 0 auto;" onclick="document.getElementById('courseUploader').click()"><i class="fa-solid fa-plus"></i> Importar Primer Curso</button>
                     </div>
 
                     <div class="hub-grid" id="courses-grid">
                         <!-- Rendered by hub.js -->
+                    </div>
+                </div>
+
+                <!-- COURSE DASHBOARD VIEW (SPA) -->
+                <div id="view-course-menu" class="dashboard-view hidden">
+                    <div class="view-header" style="margin-bottom: 1rem;">
+                        <button class="btn secondary" onclick="hubApp.goHome()" style="margin-right: 15px;">
+                            <i class="fa-solid fa-arrow-left"></i> Volver
+                        </button>
+                        <h2 id="current-course-title">Título del Curso</h2>
+                    </div>
+
+                    <div class="cards-container" id="course-modules-container">
+                        <!-- Injected by hub.js based on JSON modules -->
+                    </div>
+                </div>
+
+                <!-- TEST VIEW (SPA) -->
+                <div id="view-test" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <div>
+                            <button class="btn secondary" onclick="hubApp.goCourseMenu()" style="margin-right: 15px;">
+                                <i class="fa-solid fa-arrow-left"></i> Volver
+                            </button>
+                            <h2 id="test-title" style="display:inline-block; margin-right: 10px;">Título del Test</h2>
+                            <button id="btn-read-test" class="icon-btn" title="Leer pregunta en voz alta" onclick="hubApp.readTestAloud()">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                        <div class="progress-stats">Pregunta <span id="test-current">1</span> de <span id="test-total">10</span></div>
+                    </div>
+
+                    <div class="glass-panel test-content" style="margin-top: 1rem;">
+                        <div class="topic-tag" id="test-q-topic">Tema</div>
+                        <h3 id="test-q-text" class="question-text">¿Pregunta?</h3>
+
+                        <div id="test-q-options" class="options-list">
+                            <!-- Options injected by JS -->
+                        </div>
+
+                        <div id="test-q-feedback" class="feedback-box hidden">
+                            <!-- Explanations injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="controls" style="margin-top: 1rem;">
+                        <button id="btn-test-next" class="btn primary hidden" onclick="hubApp.nextQuestion()">Siguiente Pregunta <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- TEST RESULTS VIEW -->
+                <div id="view-results" class="dashboard-view hidden">
+                    <div class="glass-panel results-content" style="text-align: center; padding: 3rem;">
+                        <h2>¡Test Completado!</h2>
+                        <h3 id="score-message" style="font-size: 2rem; margin: 1.5rem 0;">Puntaje: X de Y</h3>
+                        <p id="score-phrase" style="color: var(--text-secondary); margin-bottom: 2rem;">¡Excelente trabajo!</p>
+                        <div class="controls" style="display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn secondary" onclick="hubApp.goCourseMenu()">
+                                <i class="fa-solid fa-arrow-left"></i> Volver al Curso
+                            </button>
+                            <button class="btn primary" onclick="hubApp.goHome()">
+                                <i class="fa-solid fa-house"></i> Volver al Hub
+                            </button>
+                        </div>
                     </div>
                 </div>
 
