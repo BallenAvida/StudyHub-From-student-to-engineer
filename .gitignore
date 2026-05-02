@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pptx
+*.bmp
+.vscode/
+.idea/
+.env
+.DS_Store
+
+PPT*.txt

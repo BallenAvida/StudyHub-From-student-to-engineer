@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="hub.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <h1>Study<span class="highlight">Hub</span></h1>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-target="view-inicio">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Inicio</span>
+                </a>
+                <a href="#" class="nav-item" data-target="view-inicio">
+                    <i class="fa-solid fa-book"></i>
+                    <span>Mis Cursos</span>
+                </a>
+                <a href="#" class="nav-item" data-target="view-analiticas">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Analíticas</span>
+                </a>
+                <a href="#" class="nav-item" data-target="view-calendario">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Calendario</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" data-target="view-configuracion">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configuración</span>
+                </a>
+                <div class="user-profile-mini">
+                    <img src="https://ui-avatars.com/api/?name=JP&background=3b82f6&color=fff&bold=true" alt="User" class="avatar">
+                    <div class="user-info">
+                        <span class="user-name">Estudiante</span>
+                        <span class="user-role">Plan Premium</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Buscar materias, temas, tests...">
+                </div>
+                <div class="topbar-actions">
+                    <div id="streak-badge" class="streak-badge hidden">
+                        <i class="fa-solid fa-fire"></i>
+                        <span id="streak-badge-num">0</span>
+                        <span>días</span>
+                    </div>
+                    <button class="icon-btn notification-btn">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <!-- INICIO VIEW -->
+                <div id="view-inicio" class="dashboard-view active">
+                    <div class="hub-hero">
+                        <div class="hub-greeting-block">
+                            <h2 id="hub-greeting">¡Bienvenido!</h2>
+                            <p id="hub-subgreeting">Tu hub de estudio personal</p>
+                        </div>
+                        <div class="hub-global-stats">
+                            <div class="g-stat">
+                                <i class="fa-solid fa-fire" style="color:#f97316"></i>
+                                <span class="g-stat-value" id="stat-streak">0</span>
+                                <span class="g-stat-label">días racha</span>
+                            </div>
+                            <div class="g-stat-sep"></div>
+                            <div class="g-stat">
+                                <i class="fa-solid fa-book-open" style="color:#60a5fa"></i>
+                                <span class="g-stat-value" id="stat-sessions">0</span>
+                                <span class="g-stat-label">sesiones</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Resume Widget -->
+                    <div id="quick-resume-container" class="quick-resume-container">
+                        <!-- Rendered by hub.js -->
+                    </div>
+
+                    <div class="section-header mt-4">
+                        <h3 class="section-label">
+                            <i class="fa-solid fa-layer-group"></i> Mis Materias
+                        </h3>
+                        <p class="section-sub">Selecciona una materia para estudiar</p>
+                    </div>
+
+                    <div class="hub-grid" id="courses-grid">
+                        <!-- Rendered by hub.js -->
+                    </div>
+                </div>
+
+                <!-- ANALÍTICAS VIEW -->
+                <div id="view-analiticas" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-chart-pie" style="color: #60a5fa; margin-right: 10px;"></i> Analíticas de Estudio</h2>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Tu progreso detallado</p>
+                    <div class="glass-panel">
+                        <h3 style="margin-bottom: 1.5rem">Resumen Global</h3>
+                        <div class="cards-container">
+                            <div class="card">
+                                <div class="card-icon" style="background: rgba(249, 115, 22, 0.2); color: #f97316;"><i class="fa-solid fa-fire"></i></div>
+                                <div class="card-content">
+                                    <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; text-transform: uppercase;">Racha Actual</h4>
+                                    <p id="analytics-streak" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0;">0 días</p>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-icon test-icon"><i class="fa-solid fa-book-open"></i></div>
+                                <div class="card-content">
+                                    <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; text-transform: uppercase;">Sesiones</h4>
+                                    <p id="analytics-sessions" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0;">0 completadas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CALENDARIO VIEW -->
+                <div id="view-calendario" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-calendar-days" style="color: #c084fc; margin-right: 10px;"></i> Calendario</h2>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Próximos repasos y exámenes</p>
+                    
+                    <div id="calendar-empty-state" class="glass-panel" style="text-align: center; padding: 4rem 2rem;">
+                        <i class="fa-regular fa-calendar-xmark" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <h3 style="margin-bottom: 0.5rem">No hay eventos próximos</h3>
+                        <p style="color: var(--text-secondary)">Sincroniza tu calendario universitario para ver fechas importantes.</p>
+                        <button class="btn primary mt-4 btn-add-event" style="margin: 0 auto;"><i class="fa-solid fa-plus"></i> Añadir Evento</button>
+                    </div>
+
+                    <div id="calendar-event-list" class="event-list hidden">
+                        <!-- Rendered by hub.js -->
+                    </div>
+
+                    <div class="calendar-actions mt-4 hidden" id="calendar-active-actions">
+                        <button class="btn secondary btn-add-event"><i class="fa-solid fa-plus"></i> Nuevo Evento</button>
+                    </div>
+                </div>
+
+                <!-- CONFIGURACIÓN VIEW -->
+                <div id="view-configuracion" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-gear" style="color: #94a3b8; margin-right: 10px;"></i> Configuración</h2>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Ajustes de la plataforma</p>
+                    <div class="glass-panel">
+                        <h3 style="color: #ef4444; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Zona de Peligro</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Cuidado: Estas acciones no se pueden deshacer y borrarán todo tu historial de estudio local.</p>
+                        <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5;" onclick="if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción es irreversible.')) { localStorage.clear(); window.location.reload(); }">
+                            <i class="fa-solid fa-trash"></i> Borrar Todo Mi Progreso
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-plus"></i> Nuevo Evento</h3>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="event-form">
+                <div class="form-group">
+                    <label>Título del Evento</label>
+                    <input type="text" id="event-title" placeholder="Ej: Examen de Agile" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="event-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="event-category">
+                            <option value="examen">Examen</option>
+                            <option value="repaso">Repaso</option>
+                            <option value="entrega">Entrega</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn secondary close-modal">Cancelar</button>
+                    <button type="submit" class="btn primary">Guardar Evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="core/storage.js"></script>
+    <script src="hub.js"></script>
+</body>
+</html>
