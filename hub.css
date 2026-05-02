@@ -1,4 +1,15 @@
 /* ─── Dashboard Layout ─────────────────────────────────────────── */
+.version-tag {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    padding: 0 15px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
 .dashboard-layout {
     display: flex;
     min-height: 100vh;
