@@ -1,19 +1,35 @@
-# 🚀 Study Hub: De Estudiante a Ingeniero
+# 🚀 Study Hub Engine (v0.2.0-alpha)
 
-Este proyecto es mi centro de mando personal para mi formación en el AIEP. No es solo una aplicación; es el registro de mi evolución técnica y analítica hacia el desarrollo de software profesional y la Inteligencia Artificial.
+> "De Estudiante a Ingeniero: Documentando la ruta hacia NVIDIA."
 
-## 🛠️ Estado Actual (Fase 1: Cimientos)
-Actualmente domino la lógica básica en Python (bucles, listas y condicionales). El diseño avanzado y la arquitectura actual han sido co-creados con IA, actuando yo como Product Manager y diseñador de la visión.
+Este proyecto es el motor de mi centro de mando personal para mi formación en **Análisis de Sistemas e Ingeniería de Software**. Lo que comenzó como una aplicación estática ha evolucionado a un **Motor SPA (Single Page Application)** capaz de procesar cualquier curso de forma dinámica.
+
+## 🧠 Filosofía del Proyecto: Engine vs. Content
+Para garantizar la escalabilidad y la limpieza legal del repositorio, he separado la **Lógica de Software (Engine)** del **Contenido Educativo (Content)**.
+
+- **The Engine:** Este repositorio contiene el código puro (HTML/CSS/JS) para renderizar dashboards, tests interactivos y analíticas.
+- **The Content:** Los cursos se cargan dinámicamente mediante archivos `.json` (Course Packs), permitiendo que la plataforma sea 100% agnóstica y privada.
+
+## 🛠️ Características Principales
+- **Importación Dinámica:** Carga cualquier curso instantáneamente arrastrando un archivo JSON.
+- **Arquitectura SPA:** Navegación fluida sin recargas de página para una experiencia premium.
+- **Gestión de Sesiones:** Seguimiento de racha (streak), sesiones de estudio y mejores puntajes en `localStorage`.
+- **Diseño Glassmorphism:** Interfaz moderna y oscura optimizada para largas sesiones de estudio.
+
+## 🚀 Cómo empezar
+1. Clona este repositorio.
+2. Abre `index.html` en cualquier navegador moderno.
+3. Importa un curso compatible (Ejemplos en `_raw_materials/`).
+   - Puedes ver la especificación del formato en [docs/COURSE_FORMAT.md](docs/COURSE_FORMAT.md).
 
 ## 🎯 El Compromiso
-Mi meta es que, al finalizar mi ingeniería, este código sea 100% propio. Este repositorio documenta la transición de ello.
+Mi meta es que, al finalizar mi ingeniería, este motor sea la base de una plataforma de estudio impulsada por IA. Este repositorio documenta la transición desde un estudiante que usa IA hasta un ingeniero que la construye.
 
-### Metas actuales:
-- Finalizar la integración del material de AWS Cloud Practitioner.
-- Refactorizar funciones básicas de Python a medida que avanzo en mis ramos.
-- Dominar el control de versiones en GitHub.
+## 🗺️ Roadmap Técnico
+- [x] **v0.2.0:** Migración a arquitectura de motor SPA.
+- [ ] **v0.3.0:** Implementación de visor de diapositivas PPT con comentarios de voz.
+- [ ] **v0.4.0:** Integración de "Agile Quest" (Modo RPG de estudio).
+- [ ] **v1.0.0:** Reemplazo de lógica Vanilla JS por React y backend en Supabase.
 
-## 🗺️ Mapa de Hitos (Roadmap)
-- **Hito 1 (Corto plazo):** Integrar mis notas de Python (los bucles y listas que estoy viendo hoy) directamente en la lógica del Hub.
-- **Hito 2 (Medio plazo):** Reemplazar los componentes de IA por código propio en React o frameworks modernos (Año 2).
-- **Hito 3 (Gran Meta):** Implementar modelos de IA entrenados por mí para ayudar en el estudio de otros compañeros.
+---
+*Desarrollado con visión de ingeniería por **JP**.*
