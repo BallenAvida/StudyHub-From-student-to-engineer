@@ -5,7 +5,11 @@ const hubApp = {
     currentQuestionIndex: 0,
     testScore: 0,
 
-    init() {
+    async init() {
+        // First, ensure we have data
+        await this.checkInitialData();
+        
+        // Then setup UI
         this.setupNavigation();
         this.setupCalendar();
         this.setupUploader();
@@ -13,6 +17,33 @@ const hubApp = {
         this.loadGlobalStats();
         this.renderCourses();
         this.renderCalendar();
+    },
+
+    async checkInitialData() {
+        const packs = EngineStorage.getAllPacks();
+        if (packs.length === 0) {
+            console.log("Checking for initial data...");
+            
+            // Try global variable first (from course_data.js)
+            if (typeof DEFAULT_COURSE_PACK !== 'undefined') {
+                console.log("Loading from global DEFAULT_COURSE_PACK...");
+                if (EngineStorage.savePack(DEFAULT_COURSE_PACK)) {
+                    return true;
+                }
+            }
+
+            // Fallback to fetch
+            try {
+                const response = await fetch('course_data.json');
+                const defaultPack = await response.json();
+                if (EngineStorage.savePack(defaultPack)) {
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Could not load default data", e);
+            }
+        }
+        return false;
     },
 
     setupUploader() {
@@ -359,12 +390,15 @@ const hubApp = {
         document.getElementById('test-q-topic').textContent = q.topic || 'General';
         document.getElementById('test-q-text').textContent = q.question;
 
-        const optionsHtml = q.options.map((opt, index) => `
-            <div class="option" onclick="hubApp.selectOption(${index})" id="opt-${index}">
-                <div class="option-letter">${String.fromCharCode(65 + index)}</div>
-                <div class="option-text">${opt}</div>
-            </div>
-        `).join('');
+        const optionsHtml = q.options.map((opt, index) => {
+            const text = typeof opt === 'string' ? opt : opt.text;
+            return `
+                <div class="option" onclick="hubApp.selectOption(${index})" id="opt-${index}">
+                    <div class="option-letter">${String.fromCharCode(65 + index)}</div>
+                    <div class="option-text">${text}</div>
+                </div>
+            `;
+        }).join('');
         
         document.getElementById('test-q-options').innerHTML = optionsHtml;
         
@@ -384,9 +418,13 @@ const hubApp = {
         
         options.forEach(opt => opt.style.pointerEvents = 'none');
         
-        let explanationHtml = q.explanation ? `<div class="explanation-text">${q.explanation}</div>` : '';
+        const selectedOpt = q.options[index];
+        const isCorrect = index === q.correct;
+        const explanation = typeof selectedOpt === 'object' ? selectedOpt.explanation : (q.explanation || '');
         
-        if (index === q.correct) {
+        let explanationHtml = explanation ? `<div class="explanation-text">${explanation}</div>` : '';
+        
+        if (isCorrect) {
             options[index].classList.add('correct');
             this.testScore++;
             feedbackBox.className = 'feedback-box success';
@@ -412,7 +450,7 @@ const hubApp = {
         
         HubStorage.saveTestResult(this.currentCourse.id, this.currentTestId, this.testScore, total);
         
-        document.getElementById('score-message').textContent = \`Puntaje: \${this.testScore} de \${total} (\${pct}%)\`;
+        document.getElementById('score-message').textContent = `Puntaje: ${this.testScore} de ${total} (${pct}%)`;
         
         let phrase = '¡Sigue practicando!';
         if (pct >= 90) phrase = '¡Excelente! Tienes dominio total.';
@@ -436,4 +474,5 @@ const hubApp = {
     }
 };
 
+window.hubApp = hubApp;
 document.addEventListener('DOMContentLoaded', () => hubApp.init());

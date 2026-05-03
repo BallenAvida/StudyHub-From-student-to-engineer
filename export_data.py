@@ -36,102 +36,74 @@ def get_options_array(q):
 def format_questions(questions_list):
     formatted = []
     for q in questions_list:
+        options = []
+        raw_options = list(q['options'].keys())
+        # We'll keep them in the order defined in the dictionary or original list
+        # hub.js will shuffle them if needed, but for the export we just need the data
+        correct_index = -1
+        
+        for i, opt_text in enumerate(raw_options):
+            options.append({
+                'text': opt_text,
+                'explanation': q['options'][opt_text].replace('\033[1m', '').replace('\033[0m', '').replace('¡CORRECTA!', '✅').replace('Falso.', '❌')
+            })
+            if opt_text == q['correct']:
+                correct_index = i
+        
         formatted.append({
             'topic': q.get('topic', 'General'),
             'question': q['question'],
-            'options': get_options_array(q)
+            'options': options,
+            'correct': correct_index
         })
     return formatted
 
-def format_guides(temas_list):
-    formatted = []
-    for t in temas_list:
-        # Strip ANSI colors from texts
-        clean_lines = []
-        for line in t['lineas']:
-            text = line[0] if isinstance(line, tuple) else line
-            # Naive ANSI strip if any
-            for code in ['\033[92m', '\033[91m', '\033[96m', '\033[93m', '\033[1m', '\033[0m']:
-                text = text.replace(code, '')
-            clean_lines.append(text)
-        
-        pregunta = None
-        if 'pregunta' in t:
-            # Format from guia_profesora3
-            opciones = []
-            for opt in t['pregunta']['opciones']:
-                opciones.append({
-                    'letra': opt[0:1].upper(),
-                    'texto': opt[3:].strip(),
-                    'isCorrect': opt[0:1].upper() == t['pregunta']['correcta'].upper(),
-                    'explicacion': t['pregunta']['explicacion_correcta'].replace('\033[1m', '').replace('\033[0m', '') if opt[0:1].upper() == t['pregunta']['correcta'].upper() else t['pregunta']['explicacion_incorrecta'].replace('\033[1m', '').replace('\033[0m', '')
-                })
-            
-            pregunta = {
-                'texto': t['pregunta']['texto'].replace('\033[1m', '').replace('\033[0m', ''),
-                'opciones': opciones
-            }
-        elif 'q' in t:
-            # Format from guia_profesora and guia_profesora2
-            q_data = t['q']
-            opciones = []
-            letters = ['A', 'B', 'C', 'D', 'E']
-            for i, (opt_text, expl) in enumerate(q_data['options'].items()):
-                opciones.append({
-                    'letra': letters[i],
-                    'texto': opt_text,
-                    'isCorrect': opt_text == q_data['correct'],
-                    'explicacion': expl.replace('\033[1m', '').replace('\033[0m', '')
-                })
-            
-            pregunta = {
-                'texto': q_data['question'].replace('\033[1m', '').replace('\033[0m', ''),
-                'opciones': opciones
-            }
-            
-        formatted.append({
-            'titulo': t['titulo'].replace('\033[1m', '').replace('\033[0m', ''),
-            'lineas': clean_lines,
-            'pregunta': pregunta
-        })
-    return formatted
-
-# Format data
-data = {
-    'tests': {
-        'test1': {
-            'title': 'Test 1: Conceptos Generales',
-            'questions': format_questions(study_test.questions)
-        },
-        'test2': {
-            'title': 'Test 2: Escenarios Avanzados',
-            'questions': format_questions(study_test2.questions)
-        },
-        'test3': {
-            'title': 'Test 3: Examen Textual PPT',
-            'questions': format_questions(study_test3.questions)
-        }
+# Define the Course Pack
+course_pack = {
+    'id': 'analisis-negocios-aiep-2026',
+    'title': 'Análisis de Sistemas y Negocios',
+    'author': 'JP - Futuro Ingeniero NVIDIA',
+    'description': 'Pack completo de estudio: Requerimientos, Stakeholders, BPMN, Agile y Gestión Estratégica.',
+    'theme': {
+        'primary': '#3b82f6',
+        'background': 'rgba(59, 130, 246, 0.1)'
     },
-    'guides': {
-        'guide1': {
-            'title': 'Guía 1: Teoría Básica',
-            'temas': format_guides(getattr(guia_profesora, 'temas_base', []))
+    'modules': {
+        'clase-2': {
+            'title': 'Clase 2: Requerimientos',
+            'questions': format_questions(study_test.questions[0:5]) # Primeras 5 son Clase 2
         },
-        'guide2': {
-            'title': 'Guía 2: Escenarios Prácticos',
-            'temas': format_guides(getattr(guia_profesora2, 'temas_base', []))
+        'clase-3': {
+            'title': 'Clase 3: Stakeholders',
+            'questions': format_questions(study_test.questions[5:10]) # Siguientes 5 son Clase 3
         },
-        'guide3': {
-            'title': 'Guía 3: Definiciones PPT',
-            'temas': format_guides(getattr(guia_profesora3, 'temas_textuales', []))
+        'clase-4': {
+            'title': 'Clase 4: BPMN',
+            'questions': format_questions(study_test.questions[10:16]) # Siguientes 6 son Clase 4
+        },
+        'clase-6': {
+            'title': 'Clase 6: Agile y KPIs',
+            'questions': format_questions(study_test.questions[16:21]) # Siguientes 5 son Clase 6
+        },
+        'clase-7': {
+            'title': 'Clase 7: Casos de Uso',
+            'questions': format_questions(study_test.questions[21:26]) # Siguientes 5 son Clase 7
+        },
+        'clase-11': {
+            'title': 'Clase 11: Gestión y FODA',
+            'questions': format_questions(study_test.questions[26:30]) # Siguientes 4 son Clase 11
         }
     }
 }
 
-# Write to data.js
-js_content = "const STUDY_DATA = " + json.dumps(data, indent=2, ensure_ascii=False) + ";"
+# Write to course_data.json
+with open('course_data.json', 'w', encoding='utf-8') as f:
+    json.dump(course_pack, f, indent=2, ensure_ascii=False)
 
-with open('data.js', 'w', encoding='utf-8') as f:
+# Write to course_data.js (for local file protocol support)
+js_content = "const DEFAULT_COURSE_PACK = " + json.dumps(course_pack, indent=2, ensure_ascii=False) + ";"
+with open('course_data.js', 'w', encoding='utf-8') as f:
     f.write(js_content)
 
-print("Exportación exitosa a data.js")
+print("Exportación exitosa a course_data.json y course_data.js")
+
