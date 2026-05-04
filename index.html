@@ -64,9 +64,12 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Buscar materias, temas, tests...">
+                <div class="search-wrapper">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-input" placeholder="Buscar materias, temas, tests...">
+                    </div>
+                    <div id="search-dropdown" class="search-dropdown hidden"></div>
                 </div>
                 <div class="topbar-actions">
                     <div id="streak-badge" class="streak-badge hidden">
@@ -104,6 +107,9 @@
                         </div>
                     </div>
 
+                    <!-- Study Queue (Spaced Repetition) — filled by hub.js -->
+                    <div id="study-queue-container"></div>
+
                     <div class="section-header mt-4" style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h3 class="section-label">
@@ -112,9 +118,9 @@
                             <p class="section-sub">Selecciona una materia para estudiar</p>
                         </div>
                         <button class="btn primary" onclick="document.getElementById('courseUploader').click()">
-                            <i class="fa-solid fa-file-import"></i> Importar Curso (.json)
+                            <i class="fa-solid fa-file-import"></i> Importar Curso (.json / .pdf)
                         </button>
-                        <input type="file" id="courseUploader" accept=".json" style="display: none;">
+                        <input type="file" id="courseUploader" accept=".json,.pdf" style="display: none;">
                     </div>
 
                     <div id="empty-courses-state" class="glass-panel hidden" style="text-align: center; padding: 4rem 2rem; margin-top: 2rem;">
@@ -137,6 +143,9 @@
                         </button>
                         <h2 id="current-course-title">Título del Curso</h2>
                     </div>
+
+                    <!-- Exam Readiness Score — shown when domain history exists -->
+                    <div id="readiness-score-container" style="margin-bottom: 1.5rem;"></div>
 
                     <div class="cards-container" id="course-modules-container">
                         <!-- Injected by hub.js based on JSON modules -->
@@ -178,11 +187,20 @@
 
                 <!-- TEST RESULTS VIEW -->
                 <div id="view-results" class="dashboard-view hidden">
-                    <div class="glass-panel results-content" style="text-align: center; padding: 3rem;">
-                        <h2>¡Test Completado!</h2>
-                        <h3 id="score-message" style="font-size: 2rem; margin: 1.5rem 0;">Puntaje: X de Y</h3>
-                        <p id="score-phrase" style="color: var(--text-secondary); margin-bottom: 2rem;">¡Excelente trabajo!</p>
-                        <div class="controls" style="display: flex; justify-content: center; gap: 1rem;">
+                    <div class="glass-panel results-content" style="padding: 3rem;">
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <h2>¡Test Completado!</h2>
+                            <h3 id="score-message" style="font-size: 2rem; margin: 1.5rem 0;">Puntaje: X de Y</h3>
+                            <p id="score-phrase" style="color: var(--text-secondary);">¡Excelente trabajo!</p>
+                        </div>
+
+                        <!-- Domain Breakdown — filled by renderResultsDomainBreakdown() -->
+                        <div id="results-domain-breakdown" style="margin-bottom: 2rem; text-align: left;"></div>
+
+                        <div class="controls" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                            <button id="btn-repaso" class="btn hidden" style="background: rgba(245,158,11,0.15); border: 1px solid #f59e0b; color: #fbbf24;" onclick="hubApp.startReviewMode()">
+                                <i class="fa-solid fa-rotate-left"></i> Repasar Falladas
+                            </button>
                             <button class="btn secondary" onclick="hubApp.goCourseMenu()">
                                 <i class="fa-solid fa-arrow-left"></i> Volver al Curso
                             </button>
@@ -199,6 +217,8 @@
                         <h2><i class="fa-solid fa-chart-pie" style="color: #60a5fa; margin-right: 10px;"></i> Analíticas de Estudio</h2>
                     </div>
                     <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Tu progreso detallado</p>
+
+                    <!-- Global Stats -->
                     <div class="glass-panel">
                         <h3 style="margin-bottom: 1.5rem">Resumen Global</h3>
                         <div class="cards-container">
@@ -217,6 +237,21 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Domain Breakdown -->
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 0.5rem">
+                            <i class="fa-solid fa-layer-group" style="color: #818cf8; margin-right: 8px;"></i>Rendimiento por Dominio
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Basado en tu historial de respuestas pregunta a pregunta</p>
+                        <div id="analytics-domains"></div>
+                    </div>
+
+                    <!-- Weak Modules -->
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 1.5rem"><i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; margin-right: 8px;"></i>Módulos más débiles</h3>
+                        <div id="analytics-weak-topics"></div>
                     </div>
                 </div>
 
@@ -250,9 +285,31 @@
                     </div>
                     <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Ajustes de la plataforma</p>
                     <div class="glass-panel">
+                        <h3 style="margin-bottom: 0.5rem"><i class="fa-solid fa-robot" style="color: #60a5fa; margin-right: 8px;"></i>IA para Generación de Cursos</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configura tu API key para importar PDFs y generar Course Packs automáticamente. La key se guarda solo en este navegador, nunca sale de tu máquina.</p>
+                        <div class="form-group">
+                            <label>Proveedor</label>
+                            <select id="ai-provider">
+                                <option value="gemini">Gemini Flash (Google) — Gratis</option>
+                                <option value="claude">Claude Haiku (Anthropic) — ~$0.005 por PDF</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="ai-api-key" placeholder="Pega tu API key aquí">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button class="btn primary" onclick="hubApp.saveApiConfig()">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar
+                            </button>
+                            <span id="api-save-status" style="font-size: 0.9rem; color: #34d399;"></span>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel">
                         <h3 style="color: #ef4444; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Zona de Peligro</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Cuidado: Estas acciones no se pueden deshacer y borrarán todo tu historial de estudio local.</p>
-                        <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5;" onclick="if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción es irreversible.')) { localStorage.clear(); window.location.reload(); }">
+                        <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5;" onclick="if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción es irreversible.')) { const apiCfg = localStorage.getItem('studyhub_api_config'); localStorage.clear(); if(apiCfg) localStorage.setItem('studyhub_api_config', apiCfg); window.location.reload(); }">
                             <i class="fa-solid fa-trash"></i> Borrar Todo Mi Progreso
                         </button>
                     </div>
@@ -296,6 +353,14 @@
         </div>
     </div>
 
+    <!-- AI Loading Overlay -->
+    <div id="ai-loading-overlay" class="ai-loading-overlay hidden">
+        <div class="ai-spinner"></div>
+        <p class="ai-loading-msg" id="ai-loading-msg">Procesando...</p>
+        <p class="ai-loading-sub">No cierres esta ventana</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="course_data.js"></script>
     <script src="core/storage.js"></script>
     <script src="hub.js"></script>

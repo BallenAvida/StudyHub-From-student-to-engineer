@@ -47,8 +47,9 @@ A unique slug for the course (e.g., `aws-cloud-practitioner`). It is used as the
 A dictionary of study modules. Currently, the engine renders these as interactive tests. Each module contains an array of `questions`.
 
 ### `questions`
-- **topic**: Sub-category of the question.
-- **options**: Array of strings. Use 4 options for consistency.
+- **topic**: Sub-category of the question (shown as tag during test).
+- **domain**: *(Optional)* High-level domain for analytics grouping (e.g. `"Cloud Concepts"`, `"Security & Compliance"`, `"Technology"`, `"Billing & Pricing"` for AWS CLF-C02). Falls back to `topic` if omitted. Used by the Domain Breakdown dashboard and the Smart Review engine to prioritize weak areas.
+- **options**: Array of strings or `{ text, explanation }` objects. Use 4 options for consistency.
 - **correct**: Zero-based index of the correct answer in the options array.
 - **explanation**: Context provided after the user answers.
 
