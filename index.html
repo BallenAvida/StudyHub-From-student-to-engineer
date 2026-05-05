@@ -7,6 +7,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="hub.css">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon-512.png">
+
+    <!-- External Libraries for gamification and analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- UI Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -109,6 +120,17 @@
 
                     <!-- Study Queue (Spaced Repetition) — filled by hub.js -->
                     <div id="study-queue-container"></div>
+                    
+                    <div id="daily-challenge-container" class="hidden" style="margin-top: 1rem; text-align: center; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn primary" onclick="hubApp.startDailyChallenge()" style="font-size: 1.1rem; padding: 0.8rem 2rem; background: var(--primary);">
+                            <i class="fa-solid fa-bolt"></i> Iniciar Daily Challenge
+                        </button>
+                    </div>
+                    <div id="mock-exam-container" class="hidden" style="margin-top: 1rem; text-align: center; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn primary" onclick="hubApp.startMockExam()" style="font-size: 1.1rem; padding: 0.8rem 2rem; background: #ef4444; border-color: #ef4444;">
+                            <i class="fa-solid fa-stopwatch"></i> Simulacro (65 Preg.)
+                        </button>
+                    </div>
 
                     <div class="section-header mt-4" style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -152,6 +174,30 @@
                     </div>
                 </div>
 
+                <!-- STUDY MODULE VIEW (SPA) -->
+                <div id="view-study-module" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <div>
+                            <button class="btn secondary" onclick="hubApp.goCourseMenu()" style="margin-right: 15px;">
+                                <i class="fa-solid fa-arrow-left"></i> Volver
+                            </button>
+                            <h2 id="study-title" style="display:inline-block; margin-right: 10px;">Module Title</h2>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel study-content" style="margin-top: 1rem; padding: 2.5rem; line-height: 1.7;">
+                        <div id="study-theory-text" style="color: var(--text-primary);">
+                            <!-- Theory content injected here -->
+                        </div>
+                    </div>
+
+                    <div class="controls" style="margin-top: 2rem; display: flex; justify-content: center;">
+                        <button id="btn-start-test-from-study" class="btn primary" style="font-size: 1.1rem; padding: 0.8rem 2rem;">
+                            Take Practice Test <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- TEST VIEW (SPA) -->
                 <div id="view-test" class="dashboard-view hidden">
                     <div class="view-header">
@@ -164,7 +210,13 @@
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                         </div>
-                        <div class="progress-stats">Pregunta <span id="test-current">1</span> de <span id="test-total">10</span></div>
+                        </div>
+                        <div class="progress-stats" style="display: flex; align-items: center; gap: 1rem;">
+                            <div id="mock-timer" class="hidden" style="color: #ef4444; font-weight: bold; font-family: monospace; font-size: 1.1rem;">
+                                <i class="fa-solid fa-clock"></i> <span id="timer-display">90:00</span>
+                            </div>
+                            <div>Pregunta <span id="test-current">1</span> de <span id="test-total">10</span></div>
+                        </div>
                     </div>
 
                     <div class="glass-panel test-content" style="margin-top: 1rem;">
@@ -177,6 +229,18 @@
 
                         <div id="test-q-feedback" class="feedback-box hidden">
                             <!-- Explanations injected by JS -->
+                        </div>
+
+                        <!-- Personal Notes Section -->
+                        <div id="personal-notes-container" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <button id="btn-toggle-notes" class="btn secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="document.getElementById('notes-area').classList.toggle('hidden')">
+                                <i class="fa-solid fa-pencil"></i> Mis Notas
+                            </button>
+                            <div id="notes-area" class="hidden" style="margin-top: 0.5rem;">
+                                <textarea id="question-note-input" class="form-control" placeholder="Escribe tus trucos o recordatorios aquí..." style="min-height: 80px; resize: vertical; margin-bottom: 0.5rem;"></textarea>
+                                <button class="btn primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="hubApp.saveCurrentNote()">Guardar Nota</button>
+                                <span id="note-save-status" style="margin-left: 10px; color: #10b981; font-size: 0.85rem;" class="hidden">¡Guardada!</span>
+                            </div>
                         </div>
                     </div>
 
@@ -239,12 +303,26 @@
                         </div>
                     </div>
 
+                    <!-- Achievements / Trofeos -->
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 1.5rem">
+                            <i class="fa-solid fa-trophy" style="color: #fbbf24; margin-right: 8px;"></i>Mis Trofeos
+                        </h3>
+                        <div id="achievements-container" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
                     <!-- Domain Breakdown -->
                     <div class="glass-panel" style="margin-top: 1.5rem;">
                         <h3 style="margin-bottom: 0.5rem">
                             <i class="fa-solid fa-layer-group" style="color: #818cf8; margin-right: 8px;"></i>Rendimiento por Dominio
                         </h3>
                         <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Basado en tu historial de respuestas pregunta a pregunta</p>
+                        <!-- Radar Chart Canvas -->
+                        <div style="position: relative; height:400px; width:100%; margin-bottom: 1.5rem; display: flex; justify-content: center;">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
                         <div id="analytics-domains"></div>
                     </div>
 
@@ -283,30 +361,80 @@
                     <div class="view-header">
                         <h2><i class="fa-solid fa-gear" style="color: #94a3b8; margin-right: 10px;"></i> Configuración</h2>
                     </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Ajustes de la plataforma</p>
-                    <div class="glass-panel">
-                        <h3 style="margin-bottom: 0.5rem"><i class="fa-solid fa-robot" style="color: #60a5fa; margin-right: 8px;"></i>IA para Generación de Cursos</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configura tu API key para importar PDFs y generar Course Packs automáticamente. La key se guarda solo en este navegador, nunca sale de tu máquina.</p>
-                        <div class="form-group">
-                            <label>Proveedor</label>
-                            <select id="ai-provider">
-                                <option value="gemini">Gemini Flash (Google) — Gratis</option>
-                                <option value="claude">Claude Haiku (Anthropic) — ~$0.005 por PDF</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>API Key</label>
-                            <input type="password" id="ai-api-key" placeholder="Pega tu API key aquí">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn primary" onclick="hubApp.saveApiConfig()">
-                                <i class="fa-solid fa-floppy-disk"></i> Guardar
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Ajustes del sistema y datos</p>
+
+                    <div class="glass-panel" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-database" style="color: #10b981;"></i> Gestión de Datos (Local)</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem;">
+                            Tu progreso de estudio se guarda localmente en tu navegador. Si borras el caché o cambias de dispositivo, perderás tus datos. Usa estas opciones para respaldar tu progreso.
+                        </p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="btn primary" onclick="hubApp.exportUserData()" style="background: var(--primary);">
+                                <i class="fa-solid fa-download"></i> Exportar Progreso (.json)
                             </button>
-                            <span id="api-save-status" style="font-size: 0.9rem; color: #34d399;"></span>
+                            <label class="btn secondary" style="cursor: pointer; margin: 0;">
+                                <i class="fa-solid fa-upload"></i> Importar Progreso
+                                <input type="file" id="import-data-file" accept=".json" style="display: none;" onchange="hubApp.importUserData(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem">
+                            <i class="fa-solid fa-mobile-screen-button" style="color: #3b82f6; margin-right: 8px;"></i>Instalar Aplicación (PWA)
+                        </h3>
+                        <div id="pwa-install-container">
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Convierte el Study Hub en una aplicación nativa para tu escritorio. Podrás acceder con un solo clic y funcionará 100% offline.</p>
+                            
+                            <div id="pwa-status-msg" class="hidden" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                                <!-- Contenido dinámico -->
+                            </div>
+
+                            <button id="btn-install-pwa" class="btn primary" style="background: var(--primary); display: none;" onclick="hubApp.installPWA()">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Instalar Study Hub
+                            </button>
                         </div>
                     </div>
 
                     <div class="glass-panel">
+                        <h3 style="margin-bottom: 1.5rem">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="color: #f43f5e; margin-right: 8px;"></i>Conexión con IA
+                        </h3>
+                        <div class="form-group">
+                            <label for="ai-provider">Proveedor</label>
+                            <select id="ai-provider" class="form-control">
+                                <option value="gemini">Google Gemini</option>
+                                <option value="claude">Anthropic Claude</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-api-key">API Key</label>
+                            <input type="password" id="ai-api-key" class="form-control" placeholder="Pega tu clave secreta aquí">
+                        </div>
+                        <button class="btn primary" onclick="hubApp.saveApiConfig()">Guardar Configuración IA</button>
+                        <span id="api-save-status" style="margin-left: 15px; color: #10b981; font-weight: bold;"></span>
+                    </div>
+
+                    <div class="glass-panel" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem">
+                            <i class="fa-solid fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>AI Course Builder (PDF Ingestion)
+                        </h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Sube un documento PDF de estudio. El sistema extraerá todo el texto localmente y lo preparará en bloques para que la IA (Claude/Gemini) genere el curso interactivo.</p>
+                        
+                        <div class="form-group">
+                            <label class="btn secondary" style="cursor: pointer; display: inline-block; width: auto;">
+                                <i class="fa-solid fa-file-arrow-up"></i> Seleccionar Archivo PDF
+                                <input type="file" id="ai-pdf-upload" accept="application/pdf" style="display: none;" onchange="hubApp.handlePDFUpload(event)">
+                            </label>
+                            <span id="ai-pdf-name" style="margin-left: 10px; color: var(--text-secondary);"></span>
+                        </div>
+                        
+                        <div id="ai-pdf-console" class="hidden" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 1rem; margin-top: 1rem; font-family: monospace; font-size: 0.85rem; color: #a7f3d0; max-height: 150px; overflow-y: auto;">
+                            Esperando archivo...
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="margin-top: 2rem;">
                         <h3 style="color: #ef4444; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Zona de Peligro</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Cuidado: Estas acciones no se pueden deshacer y borrarán todo tu historial de estudio local.</p>
                         <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5;" onclick="if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción es irreversible.')) { const apiCfg = localStorage.getItem('studyhub_api_config'); localStorage.clear(); if(apiCfg) localStorage.setItem('studyhub_api_config', apiCfg); window.location.reload(); }">
@@ -360,9 +488,33 @@
         <p class="ai-loading-sub">No cierres esta ventana</p>
     </div>
 
+    <!-- Achievement Popup -->
+    <div id="achievement-popup" class="hidden" style="position: fixed; bottom: 20px; right: 20px; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(251, 191, 36, 0.5); backdrop-filter: blur(10px); padding: 1.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; gap: 1rem; transform: translateY(100px); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <div style="background: rgba(251, 191, 36, 0.2); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-trophy" style="color: #fbbf24; font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h4 style="color: #fbbf24; margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">¡Logro Desbloqueado!</h4>
+            <p id="achievement-popup-title" style="color: white; margin: 0; font-weight: bold; font-size: 1.1rem;">Racha de Fuego</p>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="course_data.js"></script>
     <script src="core/storage.js"></script>
     <script src="hub.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

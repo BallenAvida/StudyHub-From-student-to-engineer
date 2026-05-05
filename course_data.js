@@ -1,730 +1,176 @@
 const DEFAULT_COURSE_PACK = {
-  "id": "analisis-negocios-aiep-2026",
-  "title": "Análisis de Sistemas y Negocios",
-  "author": "JP - Futuro Ingeniero NVIDIA",
-  "description": "Pack completo de estudio: Requerimientos, Stakeholders, BPMN, Agile y Gestión Estratégica.",
+  "id": "aws-clf-c02-english",
+  "title": "AWS Certified Cloud Practitioner (CLF-C02)",
   "theme": {
-    "primary": "#3b82f6",
-    "background": "rgba(59, 130, 246, 0.1)"
+    "primary": "#ff9900",
+    "background": "#232f3e"
   },
   "modules": {
-    "clase-2": {
-      "title": "Clase 2: Requerimientos",
+    "domain-1": {
+      "title": "Domain 1: Cloud Concepts",
+      "content": "\n<h3>1.1 Define the benefits of the AWS Cloud</h3>\n<ul>\n    <li><b>Security:</b> AWS provides a highly secure infrastructure, ensuring data privacy and compliance.</li>\n    <li><b>Reliability:</b> AWS uses multiple Availability Zones (AZs) to ensure high availability and fault tolerance.</li>\n    <li><b>High Availability:</b> Systems remain accessible even if a component fails.</li>\n    <li><b>Elasticity:</b> The ability to scale computing resources up or down easily based on demand (e.g., Auto Scaling).</li>\n    <li><b>Agility:</b> Rapidly develop, test, and launch applications to innovate faster.</li>\n    <li><b>Pay-as-you-go pricing:</b> Replace large capital expenses (CapEx) with variable operational expenses (OpEx).</li>\n    <li><b>Scalability:</b> Handling growing amounts of work by adding resources.</li>\n    <li><b>Global Reach:</b> Deploy applications globally in minutes using the AWS Global Infrastructure.</li>\n    <li><b>Economies of Scale:</b> Lower costs due to massive scale.</li>\n</ul>\n\n<h3>1.2 Identify design principles of the AWS Cloud</h3>\n<ul>\n    <li><b>Well-Architected Framework:</b> A set of best practices across six pillars:\n        <ul>\n            <li>Operational Excellence</li>\n            <li>Security</li>\n            <li>Reliability</li>\n            <li>Performance Efficiency</li>\n            <li>Cost Optimization</li>\n            <li>Sustainability</li>\n        </ul>\n    </li>\n    <li><b>Design for failure:</b> Assume everything will fail and design architecture to handle component failures automatically.</li>\n    <li><b>Decoupling:</b> Separate components so they do not depend on each other tightly (e.g., using SQS, SNS).</li>\n    <li><b>Elasticity vs Scalability:</b> Scalability is about handling growth, elasticity is about matching resources to demand dynamically.</li>\n</ul>\n\n<h3>1.3 Understand the benefits of and strategies for migration</h3>\n<ul>\n    <li><b>Cloud Adoption Framework (CAF):</b> Helps organizations understand how cloud adoption transforms the way they work. Six perspectives: Business, People, Governance, Platform, Security, Operations.</li>\n    <li><b>Migration Strategies (The 7 Rs):</b>\n        <ul>\n            <li><b>Rehost (Lift and shift):</b> Move an application as-is to the cloud.</li>\n            <li><b>Replatform (Lift, tinker, and shift):</b> Make a few cloud optimizations to achieve a tangible benefit, without changing the core architecture.</li>\n            <li><b>Refactor / Re-architect:</b> Re-imagine how the application is architected and developed, typically using cloud-native features.</li>\n            <li><b>Repurchase:</b> Move to a different product, usually a SaaS offering.</li>\n            <li><b>Relocate:</b> Move infrastructure to AWS without purchasing new hardware, rewriting applications, or modifying operations (e.g., VMware Cloud on AWS).</li>\n            <li><b>Retain:</b> Do nothing for now.</li>\n            <li><b>Retire:</b> Decommission or remove applications that are no longer needed.</li>\n        </ul>\n    </li>\n</ul>\n\n<h3>1.4 Understand concepts of cloud economics</h3>\n<ul>\n    <li><b>Fixed Costs vs Variable Costs:</b> Transition from fixed on-premises costs to variable cloud costs.</li>\n    <li><b>TCO (Total Cost of Ownership):</b> A financial estimate to help evaluate direct and indirect costs related to an IT investment.</li>\n    <li><b>Right-sizing:</b> Choosing the most cost-effective instance that meets the performance requirements.</li>\n</ul>\n            ",
       "questions": [
         {
-          "topic": "Requerimientos (Clase 2)",
-          "question": "[PPT SEGUNDA CLASE, Diapositiva 3] ¿Cuál es el propósito principal de los requerimientos de software?",
+          "topic": "Cloud Concepts",
+          "question": "Which AWS Cloud benefit refers to the ability to acquire resources as you need them and release resources when you no longer need them?",
           "options": [
-            {
-              "text": "Definir la arquitectura técnica interna del sistema computacional.",
-              "explanation": "❌ Entrar al diseño de la arquitectura y la ingeniería técnica ocurre mucho después, no en la fase inicial de requisitos."
-            },
-            {
-              "text": "Comunicar de manera precisa qué se espera del sistema entre cliente, usuarios y desarrolladores.",
-              "explanation": "✅ El objetivo fundacional es lograr un contrato y entendimiento claro de QUÉ debe hacerse antes de tirar código. [DATO CLAVE]: Imagina los requerimientos como el puente de traducción entre el mundo corporativo y el mundo de TI."
-            },
-            {
-              "text": "Especificar exclusivamente el lenguaje de programación y la base de datos a utilizar.",
-              "explanation": "❌ Definir Python o SQL es trabajo de implementación/desarrollo, lo cual está vetado en la redacción de requerimientos puros funcionales."
-            },
-            {
-              "text": "Establecer el diseño gráfico, los colores y la navegabilidad de la interfaz.",
-              "explanation": "❌ Aunque una UI puede derivar en requerimientos, \"colores y diseño gráfico\" es un objetivo netamente de diseño visual, no el propósito principal del negocio."
-            }
+            "Reliability",
+            "Security",
+            "Elasticity",
+            "High availability"
           ],
-          "correct": 1
+          "correct": 2,
+          "explanation": "Elasticity is the ability to scale computing resources up or down easily based on demand."
         },
         {
-          "topic": "Requerimientos (Clase 2)",
-          "question": "[PPT SEGUNDA CLASE, Diapositiva 7] \"El sistema debe responder en menos de 2 segundos\" es un ejemplo de:",
+          "topic": "Cloud Concepts",
+          "question": "A company wants to migrate an application to AWS without making any changes to its code. Which migration strategy is this?",
           "options": [
-            {
-              "text": "Requerimiento Funcional",
-              "explanation": "❌ Los funcionales determinan QUÉ hace el sistema (ej: \"Mandar email\", \"Cobrar tarjeta\"), no CÓMO lo hace."
-            },
-            {
-              "text": "Requerimiento de Arquitectura",
-              "explanation": "❌ No existe oficialmente en nuestra materia bajo ese título. Podría ser una decisión de arquitectura, pero el término real del levantamiento es No Funcional."
-            },
-            {
-              "text": "Requerimiento No Funcional",
-              "explanation": "✅ Porque restringe CÓMO debe operar o la CALIDAD bajo la cual opera. [TRAMPA CLÁSICA DE EXAMEN]: Siempre que veas una métrica referida a rendimiento (tiempo, segundos), seguridad o disponibilidad, márcala inmediatamente como No Funcional. Son las restricciones del sistema."
-            },
-            {
-              "text": "Requerimiento de Hardware",
-              "explanation": "❌ Si te dijeran \"Debe usar un servidor AWS\" sí, pero solo limitar \"tiempo\" no asume específicamente la compra de un hardware físico."
-            }
+            "Replatform",
+            "Refactor",
+            "Rehost",
+            "Repurchase"
           ],
-          "correct": 2
+          "correct": 2,
+          "explanation": "Rehosting (lift and shift) involves moving applications without changing their architecture."
         },
         {
-          "topic": "Requerimientos (Clase 2)",
-          "question": "[PPT SEGUNDA CLASE, Diapositiva 7] ¿Cuál de las siguientes fases NO pertenece al proceso formal de requerimientos?",
+          "topic": "Cloud Concepts",
+          "question": "Which design principle is part of the AWS Well-Architected Framework?",
           "options": [
-            {
-              "text": "Programación / Implementación",
-              "explanation": "✅ La escritura de código jamás ocurre durante el ciclo de requerimientos. [OJO]: Muchos profesores ponían esta alternativa para cazar giles. Echar código es de la fase de Desarrollo."
-            },
-            {
-              "text": "Análisis",
-              "explanation": "❌ El Análisis SÍ es una fase indispensable donde desmenuzas e interpretas lo que quiere el cliente."
-            },
-            {
-              "text": "Obtención (Elicitación)",
-              "explanation": "❌ La elicitación (levantamiento mediante entrevistas) SÍ es la fase vital número uno para obtener la información."
-            },
-            {
-              "text": "Validación",
-              "explanation": "❌ La Validación SÍ es la última fase de los requerimientos, donde logras que el cliente apruebe y firme."
-            }
+            "Design for fixed capacity",
+            "Design for failure",
+            "Tightly couple components",
+            "Provision for peak load"
           ],
-          "correct": 0
-        },
-        {
-          "topic": "Requerimientos (Clase 2)",
-          "question": "[PPT SEGUNDA CLASE, Diapositiva 8] Según los riesgos expuestos de no definir bien los requerimientos, ¿qué sucede en etapas avanzadas?",
-          "options": [
-            {
-              "text": "El proyecto debe obligatoriamente cambiar su tecnología base.",
-              "explanation": "❌ Te puedes haber equivocado en un formulario y no por eso vas a cambiar The Python a Java entero."
-            },
-            {
-              "text": "Se elimina la necesidad de realizar pruebas de calidad de software.",
-              "explanation": "❌ Al contrario, un pésimo requerimiento vuelve locos a los QA porque no saben qué parámetros probar."
-            },
-            {
-              "text": "El equipo técnico debe asumir el rol del Product Owner.",
-              "explanation": "❌ Un programador jamás asumirá formal y éticamente el peso del Product Owner (Cliente)."
-            },
-            {
-              "text": "Se generan altos costos adicionales por cambios tardíos en la programación.",
-              "explanation": "✅ [DATO CLAVE]: La curva de Boehm dice \"Un bug arreglado en etapa de requerimientos cuesta $1 USD, pero si lo arreglas cuando el software ya está en producción cuesta $10.000 USD\"."
-            }
-          ],
-          "correct": 3
-        },
-        {
-          "topic": "Requerimientos (Clase 2)",
-          "question": "[PPT SEGUNDA CLASE, Diapositiva 4] Según la clase, ¿cómo se define un \"Sistema\"?",
-          "options": [
-            {
-              "text": "Un software operativo diseñado exclusivamente para la gestión en la nube.",
-              "explanation": "❌ ¿Y si es un sistema gigantesco sin conexión a internet naval? La \"nube\" no es requisito de un sistema natural."
-            },
-            {
-              "text": "Conjunto de hardware, software, personas, procedimientos y datos.",
-              "explanation": "✅ Es un conglomerado integral. [TIP]: ¡Jamás te olvides de la palabra PERSONAS y PROCEDIMIENTOS! Un computador muy caro es basura si no tiene una persona que lo sepa usar usando normas."
-            },
-            {
-              "text": "La combinación de servidores físicos y el código backend automatizado.",
-              "explanation": "❌ Faltan las Personas y los Procesos. Esa es una visión netamente ingenieril solitaria."
-            },
-            {
-              "text": "Un modelo de arquitectura de software para acelerar bases de datos.",
-              "explanation": "❌ Eso es simplemente ingeniería técnica de rendimiento, no la definición conceptual de Sistema Organizacional."
-            }
-          ],
-          "correct": 1
+          "correct": 1,
+          "explanation": "Designing for failure is a key principle, ensuring systems can recover from component failures."
         }
       ]
     },
-    "clase-3": {
-      "title": "Clase 3: Stakeholders",
+    "domain-2": {
+      "title": "Domain 2: Security and Compliance",
+      "content": "\n<h3>2.1 Understand the AWS Shared Responsibility Model</h3>\n<ul>\n    <li><b>AWS responsibility (\"Security OF the Cloud\"):</b> Protecting the global infrastructure (hardware, software, networking, facilities) that runs all AWS services.</li>\n    <li><b>Customer responsibility (\"Security IN the Cloud\"):</b> Securing customer data, managing IAM (Identity and Access Management), patching guest operating systems, configuring firewalls.</li>\n</ul>\n\n<h3>2.2 Understand AWS Cloud security, identity, and compliance concepts</h3>\n<ul>\n    <li><b>AWS IAM (Identity and Access Management):</b> Securely manage access to AWS services and resources. Use Multi-Factor Authentication (MFA) for the root user. Grant least privilege.</li>\n    <li><b>IAM Users, Groups, and Roles:</b> Users are individuals. Groups are collections of users. Roles are assumed by entities (users, applications, services) to obtain temporary credentials.</li>\n    <li><b>IAM Policies:</b> JSON documents that define permissions.</li>\n    <li><b>AWS WAF (Web Application Firewall):</b> Protects web applications from common web exploits (e.g., SQL injection, cross-site scripting).</li>\n    <li><b>AWS Shield:</b> Managed Distributed Denial of Service (DDoS) protection service. Shield Standard is free, Shield Advanced is paid and offers more features.</li>\n    <li><b>AWS KMS (Key Management Service):</b> Create and manage cryptographic keys to control their use across a wide range of AWS services.</li>\n    <li><b>Amazon Macie:</b> Uses machine learning to discover and protect sensitive data (like PII) in Amazon S3.</li>\n    <li><b>Amazon GuardDuty:</b> Intelligent threat detection service that continuously monitors for malicious activity and unauthorized behavior.</li>\n    <li><b>AWS Artifact:</b> Your go-to, central resource for compliance-related information that matters to you. Provides on-demand access to AWS security and compliance reports.</li>\n</ul>\n\n<h3>2.3 Identify AWS access management capabilities</h3>\n<ul>\n    <li><b>Principle of Least Privilege:</b> Giving a user only the minimum permissions needed to perform a specific task.</li>\n    <li><b>Root User:</b> The identity created when you first open your AWS account. Should only be used to create the first IAM admin user and then locked away with MFA.</li>\n</ul>\n            ",
       "questions": [
         {
-          "topic": "Stakeholders (Clase 3)",
-          "question": "[PPT TERCERA CLASE, Diapositiva 4] Los requerimientos que describen qué hace el sistema (acciones, servicios, funciones visibles) se denominan:",
+          "topic": "Security",
+          "question": "Under the AWS shared responsibility model, which of the following is the customer's responsibility?",
           "options": [
-            {
-              "text": "Requerimientos de Calidad",
-              "explanation": "❌ La calidad de uso alude a normas y métricas (No Funcional)."
-            },
-            {
-              "text": "Requerimientos de Dominio",
-              "explanation": "❌ Los de dominio refieren a reglas jurídicas u operativas de un nicho específico (ej. \"Toda receta debe llevar firma médica\")."
-            },
-            {
-              "text": "Requerimientos Funcionales",
-              "explanation": "✅ [MEMORIZA]: \"Todo lo que el sistema HACE proactivamente o procesa operativamente\". Si puedes dibujarlo en un botón (\"Registrar\", \"Calcular\", \"Aprobar\"), es Funcional."
-            },
-            {
-              "text": "Requerimientos No Funcionales",
-              "explanation": "❌ Si habla de funciones operativas directas, no es restrictivo."
-            }
+            "Physical security of data centers",
+            "Patching infrastructure hardware",
+            "Configuring security groups and firewalls",
+            "Maintaining network infrastructure"
           ],
-          "correct": 2
+          "correct": 2,
+          "explanation": "Customers are responsible for security IN the cloud, which includes configuring firewalls and security groups."
         },
         {
-          "topic": "Stakeholders (Clase 3)",
-          "question": "[PPT TERCERA CLASE, Diapositiva 7] Según las problemáticas organizacionales, un sistema de salud o educación inclusiva corresponde a una problemática de tipo:",
+          "topic": "Security",
+          "question": "Which AWS service is used to protect web applications from common web exploits such as SQL injection?",
           "options": [
-            {
-              "text": "Gubernamental",
-              "explanation": "❌ Aunque sea ejecutado por el Estado, el *foco de impacto* principal es en la gente."
-            },
-            {
-              "text": "Tecnológica",
-              "explanation": "❌ Problemática tecnológica sería \"los servidores del hospital se caen a mediodía\"."
-            },
-            {
-              "text": "Social",
-              "explanation": "✅ La inclusión, equidad, educación pública atacan de lleno una carencia *Social* en las comunidades."
-            },
-            {
-              "text": "Operativa",
-              "explanation": "❌ Una problemática operativa referiría a \"El médico se demora 15 minutos solo en llenar el formulario\"."
-            }
+            "AWS Shield",
+            "AWS WAF",
+            "Amazon GuardDuty",
+            "Amazon Macie"
           ],
-          "correct": 2
+          "correct": 1,
+          "explanation": "AWS WAF (Web Application Firewall) helps protect web applications from common web exploits."
         },
         {
-          "topic": "Stakeholders (Clase 3)",
-          "question": "[PPT TERCERA CLASE, Diapositiva 8] En un proyecto, ¿qué rol \"define las funcionalidades del software, prioriza el backlog y actúa como enlace principal\"?",
+          "topic": "Security",
+          "question": "What is the best practice for securing the AWS account root user?",
           "options": [
-            {
-              "text": "Patrocinador del Proyecto (Sponsor)",
-              "explanation": "❌ El Patrocinador da la plata, él no define la lista de requerimientos técnicos microscópicos."
-            },
-            {
-              "text": "Gerente de Proyecto (Project Manager)",
-              "explanation": "❌ El Gerente maneja presupuesto, tiempos y riesgos. Él controla CÓMO vamos, pero no prioriza QUÉ vamos a construir y qué botón importa más."
-            },
-            {
-              "text": "Dueño del Producto (Product Owner)",
-              "explanation": "✅ Él es la Mente Maestra Central (Representante exclusivo del negocio) que dicta prioridades."
-            },
-            {
-              "text": "Analista de Sistemas",
-              "explanation": "❌ El Analista disecciona en requisitos técnicos, apoya la labor, pero no aprueba prioridades de negocio ni decide por sí solo qué va primero."
-            }
+            "Share the credentials with all administrators",
+            "Enable Multi-Factor Authentication (MFA)",
+            "Delete the root user",
+            "Use the root user for daily tasks"
           ],
-          "correct": 2
-        },
-        {
-          "topic": "Stakeholders (Clase 3)",
-          "question": "[PPT TERCERA CLASE, Diapositiva 8] ¿Qué stakeholder proporciona financiación, recursos y dirección estratégica?",
-          "options": [
-            {
-              "text": "Scrum Master",
-              "explanation": "❌ El Scrum Master remueve impedimentos organizacionales. No tiene la chequera mágica."
-            },
-            {
-              "text": "Gerente de TI (IT Manager)",
-              "explanation": "❌ Dirige la infraestructura de servidores de la compañía (depende del dinero gerencial)."
-            },
-            {
-              "text": "Entidad Regulatoria",
-              "explanation": "❌ Los reguladores dictan la ley (Ministerios, Senadores, Auditoras), jamás financian sistemas privados."
-            },
-            {
-              "text": "Patrocinador del Proyecto (Sponsor)",
-              "explanation": "✅ Director, Alta Gerencia o Inversionista de la película. [TIP]: En la matriz de Impacto vs Interés, este es el tipo al que TIENES QUE TENER CONTENTO todo el día porque apaga el sistema de 1 click."
-            }
-          ],
-          "correct": 3
-        },
-        {
-          "topic": "Stakeholders (Clase 3)",
-          "question": "[PPT TERCERA CLASE, Diapositiva 9] Son entidades externas que NO desarrollan el software ni proveen fondos, pero dictan estándares legales o éticos obligatorios:",
-          "options": [
-            {
-              "text": "Entidades Regulatorias",
-              "explanation": "✅ [DATO CLAVE]: ¡Nunca los subestimes! Las entidades regulatorias no ponen plata, pero tienen el \"Súper Poder\" jurídico de cancelar y multar todo tu proyecto si vulneras una sola norma sobre protección de datos personales."
-            },
-            {
-              "text": "Auditores de Desarrollo Agil",
-              "explanation": "❌ Una consultora ágil cobra por sus servicios; si son privados y voluntarios, no calzan aquí."
-            },
-            {
-              "text": "Usuarios Finales Avanzados",
-              "explanation": "❌ Ellos consumen el producto pero no tienen potestad legal para cerrar y auditar obligatoriamente a tu empresa."
-            },
-            {
-              "text": "Consultores Externos de Software",
-              "explanation": "❌ Intervienen activamente en tu código, cobrando sueldos como externos comerciales temporales."
-            }
-          ],
-          "correct": 0
+          "correct": 1,
+          "explanation": "The root user should have MFA enabled and should not be used for everyday tasks."
         }
       ]
     },
-    "clase-4": {
-      "title": "Clase 4: BPMN",
+    "domain-3": {
+      "title": "Domain 3: Cloud Technology and Services",
+      "content": "\n<h3>3.1 Define methods of deploying and operating in the AWS Cloud</h3>\n<ul>\n    <li><b>AWS Management Console:</b> Web-based interface for managing AWS resources.</li>\n    <li><b>AWS CLI (Command Line Interface):</b> Tool to manage AWS services from the command line.</li>\n    <li><b>AWS SDKs (Software Development Kits):</b> APIs tailored to your programming language or platform.</li>\n    <li><b>AWS CloudFormation:</b> Infrastructure as Code (IaC). Provision and manage resources using templates.</li>\n</ul>\n\n<h3>3.2 Define the AWS global infrastructure</h3>\n<ul>\n    <li><b>Regions:</b> Physical locations around the world with clusters of data centers.</li>\n    <li><b>Availability Zones (AZs):</b> One or more discrete data centers with redundant power, networking, and connectivity in an AWS Region.</li>\n    <li><b>Edge Locations:</b> Endpoints for AWS used for caching content (CloudFront) closer to users.</li>\n</ul>\n\n<h3>3.3 Identify core AWS compute services</h3>\n<ul>\n    <li><b>Amazon EC2 (Elastic Compute Cloud):</b> Virtual servers in the cloud.</li>\n    <li><b>AWS Lambda:</b> Serverless compute service that runs code in response to events.</li>\n    <li><b>Amazon ECS / EKS:</b> Container management services (Docker and Kubernetes).</li>\n</ul>\n\n<h3>3.4 Identify core AWS database services</h3>\n<ul>\n    <li><b>Amazon RDS (Relational Database Service):</b> Managed relational databases (MySQL, PostgreSQL, Oracle, SQL Server, Aurora).</li>\n    <li><b>Amazon DynamoDB:</b> Fast and flexible NoSQL database service for any scale.</li>\n    <li><b>Amazon Redshift:</b> Fast, simple, cost-effective data warehousing.</li>\n</ul>\n\n<h3>3.5 Identify core AWS network services</h3>\n<ul>\n    <li><b>Amazon VPC (Virtual Private Cloud):</b> Logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define.</li>\n    <li><b>Amazon Route 53:</b> Highly available and scalable cloud Domain Name System (DNS) web service.</li>\n    <li><b>Amazon CloudFront:</b> Global Content Delivery Network (CDN) service.</li>\n</ul>\n\n<h3>3.6 Identify core AWS storage services</h3>\n<ul>\n    <li><b>Amazon S3 (Simple Storage Service):</b> Object storage built to store and retrieve any amount of data from anywhere.</li>\n    <li><b>Amazon EBS (Elastic Block Store):</b> Block storage volumes for use with EC2 instances.</li>\n    <li><b>Amazon EFS (Elastic File System):</b> Simple, scalable file storage for use with EC2 instances.</li>\n</ul>\n            ",
       "questions": [
         {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 4] ¿Qué es BPMN?",
+          "topic": "Technology",
+          "question": "Which AWS service provides a fully managed NoSQL database?",
           "options": [
-            {
-              "text": "Un protocolo de seguridad para resguardar la información en la nube.",
-              "explanation": "❌ No tiene ninguna relación con encriptación, protocolos IP o la nube informátia."
-            },
-            {
-              "text": "Un lenguaje gráfico estandarizado para representar procesos de negocio en diagramas de flujo.",
-              "explanation": "✅ Business Process Model and Notation. Un diagrama de flujos puramente universal y normado globalmente."
-            },
-            {
-              "text": "Una metodología de levantamiento de requerimientos basada en entrevistas ágiles.",
-              "explanation": "❌ Es estricto. BPMN no es una \"metodología de entrevista\", es el resultado *gráfico* final del proceso que ya conoces."
-            },
-            {
-              "text": "Un estándar estricto para modelar datos en una base relacional SQL.",
-              "explanation": "❌ Modelar bases de datos recae sobre Diagramas Entidad-Relación o diagramas de UML enfocados en objetos."
-            }
+            "Amazon RDS",
+            "Amazon Redshift",
+            "Amazon DynamoDB",
+            "Amazon Aurora"
           ],
-          "correct": 1
+          "correct": 2,
+          "explanation": "Amazon DynamoDB is a key-value and document database that delivers single-digit millisecond performance at any scale."
         },
         {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 6] En BPMN, ¿qué diagrama representa la interacción entre dos o más participantes (ej. empresa y cliente)?",
+          "topic": "Technology",
+          "question": "What is the primary function of Amazon Route 53?",
           "options": [
-            {
-              "text": "Diagramas de coreografía",
-              "explanation": "❌ Coreografías apuntan a las redes abstractas y de intercambio genéricas, no es la definición convencional clásica."
-            },
-            {
-              "text": "Diagramas de procesos privados",
-              "explanation": "❌ Privado significa 1 solo Pool (piscina) sin mostrar a factores externos ni interactuar hacia extraños."
-            },
-            {
-              "text": "Diagramas de colaboración",
-              "explanation": "✅ [REGLA DE MEMORIA CLÁSICA]: Acuérdate de la palabra \"Colaboración = Varios Pools (Piscinas) interactuando mediantes líneas punteadas\". \"Privado = 1 único Pool triste y solo\"."
-            },
-            {
-              "text": "Diagramas de Casos de Uso",
-              "explanation": "❌ Estamos hablando de BPMN (cajitas y flechas). Caso de Uso ocupa Stickmans de palitos (UML)."
-            }
+            "Content Delivery Network (CDN)",
+            "Domain Name System (DNS) web service",
+            "Load balancing traffic",
+            "Virtual Private Cloud routing"
           ],
-          "correct": 2
+          "correct": 1,
+          "explanation": "Amazon Route 53 is a highly available and scalable cloud DNS web service."
         },
         {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 10] En BPMN, el círculo verde con un borde fino tiene como función:",
+          "topic": "Technology",
+          "question": "Which service allows you to run code without provisioning or managing servers?",
           "options": [
-            {
-              "text": "Aprobar una decisión para poder iterar una tarea repetitiva.",
-              "explanation": "❌ Las tareas repetitivas se manejan en las mismas cajas de tarea agregándoles una flechita de loop inferior."
-            },
-            {
-              "text": "Marcar el comienzo (Evento de Inicio) del proceso.",
-              "explanation": "✅ Círculo de línea fina/delgada indica START. (Dato pro: Círculo de bordes gruesos y rojo designa \"El FIN\" absoluto)."
-            },
-            {
-              "text": "Representar un mensaje obligatorio de un participante externo.",
-              "explanation": "❌ Para eso el Círculo verde llevaría internamente el símbolo gráfico de un *Sobre/Carta de Papel*."
-            },
-            {
-              "text": "Iniciar de inmediato la creación de una base de datos.",
-              "explanation": "❌ Eso lo representa el clásico rombo computacional o cilindro."
-            }
+            "Amazon EC2",
+            "AWS Lambda",
+            "Amazon ECS",
+            "AWS Elastic Beanstalk"
           ],
-          "correct": 1
-        },
-        {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 11] En BPMN, ¿qué símbolo controla el flujo del proceso según condiciones o decisiones lógicas?",
-          "options": [
-            {
-              "text": "Evento intermedio de temporizador",
-              "explanation": "❌ Simboliza una espera pasiva inevitable (ej: \"Espera 24 horas\" con el dibujo de relojito). Cero bifurcaciones de lógica."
-            },
-            {
-              "text": "Actividad de subproceso",
-              "explanation": "❌ La cajita de tarea más un símbolo de [+] que agrupa etapas internas, pero no rompe flechas lógicas."
-            },
-            {
-              "text": "Rombo (Compuerta / Gateway)",
-              "explanation": "✅ El símbolo más importante del mundo informático. Representa las temidas preguntas existenciales del diagrama (Si X, entonces A. Si NO X, entonces B)."
-            },
-            {
-              "text": "Flecha de mensaje",
-              "explanation": "❌ Solo traslada de un pool hacia el otro pool un aviso pasivo."
-            }
-          ],
-          "correct": 2
-        },
-        {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 14] En BPMN, ¿qué función cumple el símbolo del \"Cilindro\"?",
-          "options": [
-            {
-              "text": "Almacenamiento persistente de información (Base de datos).",
-              "explanation": "✅ Dato universal de la computación comercial: toda cosa graficable que parezca disco duro cilíndrico refiere a \"Data Storage / Persistencia\"."
-            },
-            {
-              "text": "Interacción manual obligatoria del usuario con el sistema.",
-              "explanation": "❌ Una tarea interactiva recae y lleva el sticker chiquito del actor vivo (un humano)."
-            },
-            {
-              "text": "Retraso o pausa temporal dictada por una compuerta.",
-              "explanation": "❌ No tiene correlación con temporizadores."
-            },
-            {
-              "text": "Procesamiento de información en un servidor externo.",
-              "explanation": "❌ Sería Service Task con símbolo de rueda."
-            }
-          ],
-          "correct": 0
-        },
-        {
-          "topic": "BPMN (Clase 4)",
-          "question": "[PPT CUARTA CLASE, Diapositiva 16] Una flecha punteada con un sobre (Flujo de Mensaje) representa típicamente:",
-          "options": [
-            {
-              "text": "Un flujo de secuencia especial con prioridad crítica.",
-              "explanation": "❌ Modificador que pertenece a metodologías sin estándar."
-            },
-            {
-              "text": "Transferencia interna dentro del mismo pool o departamento.",
-              "explanation": "❌ ¡TRAMPA VITAL! Las flechas punteadas con sobre NO pueden nunca moverse bajo la misma piscina organizativa; comunican cosas ajenas (Ej: Tienda vs Banco)."
-            },
-            {
-              "text": "Una asociación hacia un sistema de almacenamiento de datos.",
-              "explanation": "❌ Para almacenamiento se usan líneas sólidas hacia el cilindro."
-            },
-            {
-              "text": "Comunicación e intercambio de mensajes entre participantes distintos.",
-              "explanation": "✅ Siempre apuntan viajando desde el ecosistema tu empresa y saltan el muro para chocar con tus clientes u organizaciones terceras extrañas."
-            }
-          ],
-          "correct": 3
+          "correct": 1,
+          "explanation": "AWS Lambda is a serverless compute service that lets you run code without provisioning or managing servers."
         }
       ]
     },
-    "clase-6": {
-      "title": "Clase 6: Agile y KPIs",
+    "domain-4": {
+      "title": "Domain 4: Billing, Pricing, and Support",
+      "content": "\n<h3>4.1 Compare AWS pricing models</h3>\n<ul>\n    <li><b>On-Demand:</b> Pay for compute or database capacity by the hour or second with no long-term commitments.</li>\n    <li><b>Reserved Instances (RIs):</b> Provide a significant discount (up to 75%) compared to On-Demand pricing and provide a capacity reservation when used in a specific AZ. Ideal for steady-state workloads.</li>\n    <li><b>Savings Plans:</b> Flexible pricing model offering lower prices compared to On-Demand pricing, in exchange for a specific usage commitment (measured in $/hour) for a 1 or 3-year period.</li>\n    <li><b>Spot Instances:</b> Request spare Amazon EC2 computing capacity for up to 90% off the On-Demand price. Can be interrupted. Good for flexible, fault-tolerant workloads.</li>\n</ul>\n\n<h3>4.2 Understand resources for billing, pricing, and support</h3>\n<ul>\n    <li><b>AWS Cost Explorer:</b> Tool to view and analyze your costs and usage. You can view data for up to the last 12 months, forecast costs, and get recommendations.</li>\n    <li><b>AWS Budgets:</b> Set custom budgets to alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount.</li>\n    <li><b>AWS Pricing Calculator:</b> Estimate the cost for your architecture solution.</li>\n    <li><b>AWS Support Plans:</b>\n        <ul>\n            <li><b>Basic:</b> Free. Account and billing questions, service limit increases.</li>\n            <li><b>Developer:</b> Best practice guidance. Email access to Cloud Support Associates during business hours.</li>\n            <li><b>Business:</b> 24x7 phone, email, and chat access to Cloud Support Engineers. AWS Trusted Advisor full checks.</li>\n            <li><b>Enterprise:</b> Includes a Technical Account Manager (TAM) and Concierge Support Team.</li>\n        </ul>\n    </li>\n    <li><b>AWS Trusted Advisor:</b> Online tool that provides real-time guidance to help you provision your resources following AWS best practices (Cost Optimization, Performance, Security, Fault Tolerance, Service Limits).</li>\n    <li><b>AWS Organizations:</b> Centrally manage and govern your environment as you grow and scale your AWS resources. Offers Consolidated Billing.</li>\n</ul>\n            ",
       "questions": [
         {
-          "topic": "Agile y KPIs (Clase 6)",
-          "question": "[PPT SEXTA CLASE, Diapositiva 5] ¿Cuáles son las 4 etapas del Ciclo PDCA para la mejora continua?",
+          "topic": "Billing",
+          "question": "Which EC2 pricing model provides the deepest discount for steady-state workloads and requires a 1 or 3-year commitment?",
           "options": [
-            {
-              "text": "Planificar → Ejecutar → Verificar → Actuar",
-              "explanation": "✅ El Método Clásico de Deming. [TIPS DE MEMORIA]: P (Plan - Pensar), D (Do - Hacer el pan), C (Check - Revisar que el pan no quemó), A (Act - Modificar receta de mañana)."
-            },
-            {
-              "text": "Programar → Desarrollar → Comprobar → Aprobar",
-              "explanation": "❌ Engaño semántico. Es cíclico de mejora calidad, no ciclo de vida de desarrollo de software básico."
-            },
-            {
-              "text": "Planificar → Diseñar → Construir → Ajustar",
-              "explanation": "❌ Mezcla con metodologías iterativas sin seguir el canon Deming del PDCA real."
-            },
-            {
-              "text": "Priorizar → Desarrollar → Corregir → Avanzar",
-              "explanation": "❌ Trampa."
-            }
+            "On-Demand Instances",
+            "Spot Instances",
+            "Reserved Instances",
+            "Dedicated Hosts"
           ],
-          "correct": 0
+          "correct": 2,
+          "explanation": "Reserved Instances provide a significant discount compared to On-Demand pricing for steady-state workloads."
         },
         {
-          "topic": "Agile y KPIs (Clase 6)",
-          "question": "[PPT SEXTA CLASE, Diapositiva 10] En la metodología XP (Extreme Programming), la práctica donde \"el código se prueba y se integra varias veces al día\" se denomina:",
+          "topic": "Billing",
+          "question": "Which AWS tool provides real-time guidance following AWS best practices to help you optimize costs and improve security?",
           "options": [
-            {
-              "text": "Programación en parejas (Pair Programming)",
-              "explanation": "❌ Es el acto de sentar a dos tipos en un teclado y mirarse a los ojos dictándose de forma obligatoria."
-            },
-            {
-              "text": "Refactorización (Refactoring)",
-              "explanation": "❌ Modificar código subyacente para mejorarlo sin asestar daños visuales."
-            },
-            {
-              "text": "Integración continua (Continuous Integration)",
-              "explanation": "✅ Filosofía pilar de DevOps. Enviar tu código 15 veces al día asegurando que pruebas atajen desastres si tumbas algo."
-            },
-            {
-              "text": "Cliente In-Situ (On-site Customer)",
-              "explanation": "❌ El cliente es secuestrado dentro del laboratorio para dar Okays instantáneos presenciales."
-            }
+            "AWS Cost Explorer",
+            "AWS Budgets",
+            "AWS Trusted Advisor",
+            "AWS Pricing Calculator"
           ],
-          "correct": 2
+          "correct": 2,
+          "explanation": "AWS Trusted Advisor provides real-time guidance on best practices across five categories, including cost optimization and security."
         },
         {
-          "topic": "Agile y KPIs (Clase 6)",
-          "question": "[PPT SEXTA CLASE, Diapositiva 13] Una de las características de un buen KPI es que sea \"Medible\", esto significa concretamente que:",
+          "topic": "Billing",
+          "question": "Which AWS Support plan provides access to a designated Technical Account Manager (TAM)?",
           "options": [
-            {
-              "text": "Se puede recolectar su dato en menos de una hora.",
-              "explanation": "❌ Algunos KPIs se miden mensualmente como la fuga de clientes general bancaria. Aún medible, aunque tome tiempo y espera inamovible."
-            },
-            {
-              "text": "Evalúa el rendimiento de los empleados a final de año de manera cualitativa.",
-              "explanation": "❌ Un reporte tipo \"es re buen tipo\" apela a sentimientos subjetivos puros y cualitativos que evaden ser un KPI."
-            },
-            {
-              "text": "Logra cuantificarse objetivamente en números, promedios o porcentajes.",
-              "explanation": "✅ Si no se puede meter puramente en una hoja de matemática financiera excel; entonces de plano ¡no sirve ni es confiable como KPI gerencial medible!"
-            },
-            {
-              "text": "Determina la duración exacta en la que un proyecto culminará.",
-              "explanation": "❌ Medir duración es el fin natural de cronogramas Gantt, el KPI aplica a retenciones, compras y desvíos."
-            }
+            "Basic Support",
+            "Developer Support",
+            "Business Support",
+            "Enterprise Support"
           ],
-          "correct": 2
-        },
-        {
-          "topic": "Agile y KPIs (Clase 6)",
-          "question": "[PPT SEXTA CLASE, Diapositiva 16] Según se explica en las clases, ¿cuál es la diferencia clave entre una métrica y un KPI?",
-          "options": [
-            {
-              "text": "Las métricas solo aplican a infraestructura TI y los KPIs a las gerencias.",
-              "explanation": "❌ Tú como gerente podrías andar contando \"cuántos lápices Bic existen\" y sería una métrica inútil."
-            },
-            {
-              "text": "Los KPIs evalúan aspectos abstractos cualitativos mientras las métricas evalúan bases de datos.",
-              "explanation": "❌ Ambos viven y mueren siendo elementos matemáticamente estadísticos duros (Base Cuantitativa)."
-            },
-            {
-              "text": "Toda métrica es estratégica en el negocio, independientemente del contexto.",
-              "explanation": "❌ Mentira radical corporativa. \"Latidos por minuto del guardia de seguridad\". Métrica brillante numéricamente, cero utilidad estratégica en software."
-            },
-            {
-              "text": "Toda métrica NO es estratégica; el KPI es un tipo de métrica CLAVE que sí mide el éxito del negocio.",
-              "explanation": "✅ Las métricas te dicen si andas bien del corazón. Los KPIs te dicen si estás jugando bien los mundiales corporativos y generando millones de dólares de ganancia a tus superiores. Es el indicador final sagrado."
-            }
-          ],
-          "correct": 3
-        },
-        {
-          "topic": "Agile y KPIs (Clase 6)",
-          "question": "[PPT SEXTA CLASE, Diapositiva 19] El margen de ganancia o el ROI (Retorno de Inversión) son perfectos ejemplos de KPIs de tipo:",
-          "options": [
-            {
-              "text": "Operativos",
-              "explanation": "❌ Operativo = Métrica productiva física, como autos construidos por mes o incidencias técnicas reparadas sin impacto."
-            },
-            {
-              "text": "De gestión de clientes",
-              "explanation": "❌ Clientes = Referido por encuesta a tasas de satisfacción o quejas de la página online."
-            },
-            {
-              "text": "Financieros",
-              "explanation": "✅ Flujo de capital puro. Si entra dinero y evalúas la relación dólar entrante vs inversión quemada inicial, es el terreno exclusivo puramente financiero matemático organizacional."
-            },
-            {
-              "text": "De calidad del producto",
-              "explanation": "❌ Calidad evalúa pureza métrica de rechazo, tolerancias ISO aplicadas en bodega, o defectos pre-lanzamientos."
-            }
-          ],
-          "correct": 2
-        }
-      ]
-    },
-    "clase-7": {
-      "title": "Clase 7: Casos de Uso",
-      "questions": [
-        {
-          "topic": "Casos de Uso e Historias (Clase 7)",
-          "question": "[PPT SEPTIMA CLASE, Diapositiva 4] Según la teoría, ¿qué es un Caso de Uso?",
-          "options": [
-            {
-              "text": "Una representación visual del flujo de datos interno entre los servidores del sistema.",
-              "explanation": "❌ Sería diagramación pura nivel TI abstracto ajeno al ojo humano operario directo."
-            },
-            {
-              "text": "Un registro minucioso de todas las clases y métodos utilizados en lenguaje Java.",
-              "explanation": "❌ Arquitectura y diagramación clásica formal de clases encapsuladas back-end ajenas totalmente."
-            },
-            {
-              "text": "Una técnica de modelado que describe, paso a paso, cómo un usuario interactúa con un sistema para alcanzar un fin.",
-              "explanation": "✅ Actores, pasos de éxito lógico directo, escenarios amigables a la lectura administrativa humana con flujos lógicos palpables."
-            },
-            {
-              "text": "Un documento legal de cumplimiento para ser presentado a reguladores externos.",
-              "explanation": "❌ Ni los jueces leen diagramas con \"stickmans y circulitos\" ovalados por un analista que detallan las pantallas."
-            }
-          ],
-          "correct": 2
-        },
-        {
-          "topic": "Casos de Uso e Historias (Clase 7)",
-          "question": "[PPT SEPTIMA CLASE, Diapositiva 7] En diagrama UML, si un caso de uso se relaciona con otro mediante el estereotipo <<include>>, significa que:",
-          "options": [
-            {
-              "text": "Un caso de uso es situacional y puede invocar a otro sólo si el usuario lo requiere.",
-              "explanation": "❌ Para eso recurriríamos al gran hermano <<extend>>, diseñado por la divina providencia de UML para casos raros u opcionales anexos exentos de obligatoriedad natural."
-            },
-            {
-              "text": "El diagrama representa un caso de error donde el actor pierde su acceso.",
-              "explanation": "❌ Modelaciones de control exento fuera de flujos genéricos dependientes absolutos."
-            },
-            {
-              "text": "Un caso de uso base siempre y de forma obligatoria transita/invoca a otro caso de uso.",
-              "explanation": "✅ [REGLA DE ORO UML]: \"Include\": dependencia vital que ineludiblemente jala la otra parte cada santa vez que lo uses (Ej: \"Emitir compra\" --> [include] --> \"Rebajar stock y revisar tarjeta\")."
-            },
-            {
-              "text": "El actor hereda temporalmente las restricciones y accesos de un administrador.",
-              "explanation": "❌ Intercalación y relaciones \"generalizadas\", donde un \"Paciente VIP\" hereda permisos \"Paciente Base\". Cero relación formal al include."
-            }
-          ],
-          "correct": 2
-        },
-        {
-          "topic": "Casos de Uso e Historias (Clase 7)",
-          "question": "[PPT SEPTIMA CLASE, Diapositiva 10] Los Casos de Uso que detallan interacciones técnicas, pasos concretos y respuestas de interfaces con una parte específica del sistema, se denominan:",
-          "options": [
-            {
-              "text": "Casos de uso de negocio",
-              "explanation": "❌ Desvinculan explícitamente y globalizan el accionar prescindiendo absolutos sin alusión formal alguna a clics online y web interfaces."
-            },
-            {
-              "text": "Casos de uso de sistema",
-              "explanation": "✅ El sistema web y los módulos específicos y directos dictan \"Ingresa el Rut\", \"La intranet valida sus datos en 2 segundos\"."
-            },
-            {
-              "text": "Casos de uso de validación analítica",
-              "explanation": "❌ Terminología y abstracciones ajenas formalmente dictaminadas por esta rama del aprendizaje de negocios puramente."
-            },
-            {
-              "text": "Casos de uso relacionales UML",
-              "explanation": "❌ Combinación técnica extraña irreal cruzada entre bases datos."
-            }
-          ],
-          "correct": 1
-        },
-        {
-          "topic": "Casos de Uso e Historias (Clase 7)",
-          "question": "[PPT SEPTIMA CLASE, Diapositiva 12] La estructura universal para redactar una Historia de Usuario dice: \"Como [Rol], quiero [funcionalidad] para...\". ¿Qué se estipula obligatoriamente en esa última sección [para...]? ",
-          "options": [
-            {
-              "text": "La tecnología e infraestructura a usar en el desarrollo.",
-              "explanation": "❌ En marcos y dictámenes del Ágil puros se desaconseja letalmente dictarle tecnología a programadores, importa entregar el dolor general final o necesidad."
-            },
-            {
-              "text": "El tiempo máximo estimado para terminar la programación ágil.",
-              "explanation": "❌ Esto entra y descansa sobre procesos estimatorios de cartas de póker donde cada persona asigna Story Points a votaciones plurales (Estimaciones)."
-            },
-            {
-              "text": "El criterio técnico de pruebas (QA) que los programadores verificarán.",
-              "explanation": "❌ Criterios (Given When Then) apoyan a los testers por fuera en el ticket, en una esquina libre; no caben nunca dentro del párrafo introductorio nominal de tres bloques principales exigidos."
-            },
-            {
-              "text": "El beneficio, meta o valor organizacional que se busca obtener de dicha funcionalidad.",
-              "explanation": "✅ \"... [para optimizar el 15% del tiempo procesal]\". ¡Ahí está y radica verdaderamente el dolor capital! Todo sirve de valor base de validación y fin corporativo al usuario final natural."
-            }
-          ],
-          "correct": 3
-        },
-        {
-          "topic": "Casos de Uso e Historias (Clase 7)",
-          "question": "[PPT SEPTIMA CLASE, Diapositiva 17] Para evitar crear malas historias de usuario, se utiliza el criterio de calidad INVEST. ¿Qué significa o qué evalúa la letra \"E\"?",
-          "options": [
-            {
-              "text": "Escrita (Written text)",
-              "explanation": "❌ Invocación de distractor clásico. Evidentes e inamovibles, van escritas."
-            },
-            {
-              "text": "Escalable (Scalable)",
-              "explanation": "❌ Apunte conceptual meramente ingenieril de nube y servidores escalables al millar de demandas, pero la metodología INVEST exige en la historia de usuario otros focos de atención y valor inmediato real tangibles."
-            },
-            {
-              "text": "Estimable (El equipo puede evaluar qué tiempo o esfuerzo tomará)",
-              "explanation": "✅ Todo el conjunto de programadores asume \"Esto valdrá 2 horas, esto valdrá un mes de caos total, esto se puede picotear hoy\". Estimación clara garantiza certeza e hitos de pago."
-            },
-            {
-              "text": "Efectiva (Effective)",
-              "explanation": "❌ Típico engaño conceptual en test. INVEST las resume netamente en Independent, Negotiable, Valuable, Estimable, Small, Testable. Cero huecos de efectividad extra."
-            }
-          ],
-          "correct": 2
-        }
-      ]
-    },
-    "clase-11": {
-      "title": "Clase 11: Gestión y FODA",
-      "questions": [
-        {
-          "topic": "Gestión y FODA (Clase 11)",
-          "question": "[PPT CLASE 11, Diapositiva 4] Según las 5 Fases del Ciclo de Vida del Proyecto, ¿en cuál de ellas se aprueba justificadamente la idea y se redacta el \"Acta de Constitución\" (Charter)?",
-          "options": [
-            {
-              "text": "Planificación",
-              "explanation": "❌ Cuando pasas y logras el \"Acta\", entras de lleno legal y victorioso a esta etapa con tus directores con Gantt desglosados milimétricos en reuniones semanales densas formales."
-            },
-            {
-              "text": "Inicio",
-              "explanation": "✅ Semilla original primogénita de los dueños, momento donde apruebas justificación capitalina. El \"Inicio\" engloba el acta oficial; sin ella y si saltas el paso formal la organización de tu proyecto será un rotundo desorden ilícito en gerencia corporativa de raíz."
-            },
-            {
-              "text": "Ejecución",
-              "explanation": "❌ Significa programar concretando acciones con presupuestos consumiendo cajas y bolsillos operacionales. Es criminal y absurdo realizarla al primer respiro inicial puramente."
-            },
-            {
-              "text": "Seguimiento y Control",
-              "explanation": "❌ Esto rige curvos visuales evaluados mes a mes, un auditoria sobre ruedas sobre un vehículo que al menos cuenta y ya transitó semanas de kilometraje reales de gestión."
-            }
-          ],
-          "correct": 1
-        },
-        {
-          "topic": "Gestión y FODA (Clase 11)",
-          "question": "[PPT CLASE 11, Diapositiva 6] En la Gestión de Riesgos, cuando clasificas un problema anotándolo como riesgo de probabilidad \"Alto\", \"Medio\" o \"Bajo\", corresponde a la técnica de análisis:",
-          "options": [
-            {
-              "text": "Cuantitativo",
-              "explanation": "❌ Análisis que involucra dinero monetario financiero. Ej: [Si ocurre este incendio natural el hospital perderá 2,3 millones de euros anuales con seguridad del 40%]."
-            },
-            {
-              "text": "Predictivo Secuencial",
-              "explanation": "❌ Corresponde netamente al diseño integral y clásico del marco base Cascada del PMI/Gantt y un proceso de vida integral completo transaccional de obra, no a riesgos focalizados nominales in situ puntuales en una matriz temporal ligera."
-            },
-            {
-              "text": "Cualitativo",
-              "explanation": "✅ Palabras base de lenguaje natural suave y de apreciación (\"Grave\", \"Leve\", \"Muy alto\", \"Riesgoso emocional\"). Es una evaluación intuitiva del \"feeling\" general base gerencial humana instintiva directa y eficiente en un minuto base."
-            },
-            {
-              "text": "Histórico",
-              "explanation": "❌ Aunque analices caídas de meses anteriores del archivo duro (lo que es válido), la métrica nominal conceptual recae a otro departamento base estricto y analítico."
-            }
-          ],
-          "correct": 2
-        },
-        {
-          "topic": "Gestión y FODA (Clase 11)",
-          "question": "[PPT CLASE 11, Diapositiva 8] Tras hacer tu análisis de cuadrantes FODA, diseñas una \"Estrategia FA\". Esto lógicamente significa:",
-          "options": [
-            {
-              "text": "Fomentar Alianzas estratégicas con competidores locales.",
-              "explanation": "❌ Las uniones empresariales escapan diametralmente a acrónimos nominales clásicos \"FODA\", es un distractor netamente lexical semántico español de test universitario superficial."
-            },
-            {
-              "text": "Usar Fortalezas internas para potenciar y aprovechar Oportunidades.",
-              "explanation": "❌ ¡CUIDADO! Cruzar internamente positivo (F) contra externo positivo (O) deviene dictaminantemente formal y lógica estricta a una Estrategia inamovible (FO), no (FA)."
-            },
-            {
-              "text": "Minimizar Debilidades internas y así evitar caer en Amenazas externas.",
-              "explanation": "❌ Aborda y defiende con escudos la parte interna peor capacitada organizativa en cara y al frente a crisis mundiales (Estrategia Defensiva natural pura extrema: DA)."
-            },
-            {
-              "text": "Utilizar y enfocar tus Fortalezas internas para combatir o esquivar tus Amenazas externas.",
-              "explanation": "✅ Agarras tus millones de tu excelente cultura laboral intachable de empleados de matriz base (Fortaleza), e inviertes esa muralla fortificada gruesa frente a la feroz inflación o a Apple intentando demolerte de mercado (Amenaza Exterior de Mercado Global inamovible)."
-            }
-          ],
-          "correct": 3
-        },
-        {
-          "topic": "Gestión y FODA (Clase 11)",
-          "question": "[PPT CLASE 11, Diapositiva 19] Una vez documentado el listado FODA, ¿qué técnica se recomienda usar como \"paso siguiente\" para aterrizarlos en acciones concretas y ejecutables?",
-          "options": [
-            {
-              "text": "Documentar los requerimientos No Funcionales del proyecto.",
-              "explanation": "❌ Es totalmente micro y TI comparado a mandos analítico integrales gerenciales C-Levels."
-            },
-            {
-              "text": "Diagramación general BPMN enfocada en Riesgos.",
-              "explanation": "❌ Te pondrás a realizar cuadritos procedimentales logísticos, perdiendo y desconociendo todo el nivel estratégico general superior."
-            },
-            {
-              "text": "Análisis CAME (Corregir, Afrontar, Mantener y Explotar).",
-              "explanation": "✅ [REGLA ESTRATÉGICA]: El FODA se queda puramente en diagnosticar (pensar), pero CAME te exige actuar. Corregir (Debilidades), Afrontar (Amenazas), Mantener (Fortalezas) y Explotar (Oportunidades)."
-            },
-            {
-              "text": "Empleo de diagramas relacionales UML <<include>>",
-              "explanation": "❌ Es una locura y cruce académico espantoso ajeno al negocio llevar a Gerentes de Planificación Macroeconómica hacia análisis técnicos lógicos del backend transaccional de computación en diagramaciones de diseño relacional técnico de código."
-            }
-          ],
-          "correct": 2
+          "correct": 3,
+          "explanation": "The Enterprise Support plan is the only plan that includes a designated Technical Account Manager (TAM)."
         }
       ]
     }

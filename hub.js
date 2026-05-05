@@ -7,6 +7,10 @@ const hubApp = {
     failedQuestions: [],
     currentSessionResults: [], // per-answer tracking for results breakdown
     isReviewMode: false,
+    isMockExam: false,
+    mockTimeRemaining: 0,
+    mockTimerInterval: null,
+    deferredPrompt: null,
 
     async init() {
         // First, ensure we have data
@@ -22,6 +26,9 @@ const hubApp = {
         this.renderCourses();
         this.renderCalendar();
         this.renderStudyQueue();
+        this.setupKeyboardShortcuts();
+        this.setupPWA();
+        this.setupAchievements();
     },
 
     async checkInitialData() {
@@ -49,6 +56,36 @@ const hubApp = {
             }
         }
         return false;
+    },
+
+    setupAchievements() {
+        document.addEventListener('achievementUnlocked', (e) => {
+            const achId = e.detail.id;
+            const titles = {
+                'streak_7': 'Racha de 7 días',
+                'first_100': 'Primer 100%',
+                'mock_5': 'Arquitecto Junior'
+            };
+            
+            const popup = document.getElementById('achievement-popup');
+            const titleEl = document.getElementById('achievement-popup-title');
+            
+            if (popup && titleEl) {
+                titleEl.textContent = titles[achId] || '¡Nuevo Logro!';
+                popup.classList.remove('hidden');
+                popup.style.transform = 'translateY(0)';
+                
+                setTimeout(() => {
+                    popup.style.transform = 'translateY(100px)';
+                    setTimeout(() => popup.classList.add('hidden'), 500);
+                }, 4000);
+            }
+            
+            // Re-render if on analytics view
+            if (!document.getElementById('view-analiticas').classList.contains('hidden')) {
+                this.loadAnalytics();
+            }
+        });
     },
 
     setupUploader() {
@@ -127,9 +164,104 @@ const hubApp = {
         dropdown.classList.remove('hidden');
     },
 
+    setupPWA() {
+        const installBtn = document.getElementById('btn-install-pwa');
+        const statusMsg = document.getElementById('pwa-status-msg');
+
+        if (window.location.protocol === 'file:') {
+            if (statusMsg) {
+                statusMsg.classList.remove('hidden');
+                statusMsg.innerHTML = `
+                    <i class="fa-solid fa-circle-info" style="color:#3b82f6; margin-right:5px;"></i>
+                    <b>Protocolo Local detectado:</b> Chrome no permite instalar aplicaciones desde archivos locales.<br><br>
+                    Para habilitar el botón de instalación, ejecuta este comando en la carpeta del proyecto y abre <b>http://localhost:8080</b>:<br>
+                    <code style="display:block; background:rgba(0,0,0,0.3); padding:8px; margin-top:8px; border-radius:4px; color:#a7f3d0; font-size:0.8rem;">python -m http.server 8080</code>
+                `;
+            }
+            return;
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            if (installBtn) installBtn.style.display = 'inline-block';
+            if (statusMsg) {
+                statusMsg.classList.remove('hidden');
+                statusMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                statusMsg.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                statusMsg.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#10b981; margin-right:5px;"></i> ¡Listo! Tu navegador soporta la instalación. Haz clic en el botón de abajo.';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            this.deferredPrompt = null;
+            if (installBtn) installBtn.style.display = 'none';
+            if (statusMsg) statusMsg.innerHTML = '¡Aplicación instalada con éxito! Ya puedes abrirla desde tu menú de aplicaciones.';
+        });
+    },
+
+    async installPWA() {
+        if (!this.deferredPrompt) return;
+        this.deferredPrompt.prompt();
+        const { outcome } = await this.deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        this.deferredPrompt = null;
+    },
+
     clearSearch() {
         const d = document.getElementById('search-dropdown');
         if (d) d.classList.add('hidden');
+    },
+
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Only trigger if a test is active
+            if (this.currentTestQuestions.length === 0) return;
+            // Ignore if user is typing in an input/textarea
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const resultsView = document.getElementById('test-results');
+            const isEndView = resultsView && !resultsView.classList.contains('hidden');
+            
+            if (!isEndView) {
+                // Answering questions
+                if (['1', '2', '3', '4'].includes(e.key)) {
+                    const idx = parseInt(e.key) - 1;
+                    const options = document.querySelectorAll('.option-btn');
+                    if (options[idx] && !options[idx].disabled) {
+                        options[idx].click();
+                    }
+                }
+                
+                if (e.key === ' ' || e.key === 'Enter') {
+                    const nextBtn = document.getElementById('btn-next');
+                    if (nextBtn && !nextBtn.classList.contains('hidden')) {
+                        e.preventDefault();
+                        nextBtn.click();
+                    }
+                }
+
+                if (e.key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    this.readTestAloud();
+                }
+            } else {
+                // Result view
+                if (e.key === ' ' || e.key === 'Enter') {
+                    const repasoBtn = document.getElementById('btn-repaso');
+                    if (repasoBtn && !repasoBtn.classList.contains('hidden')) {
+                        e.preventDefault();
+                        repasoBtn.click();
+                    } else {
+                        const returnBtn = document.querySelector('#test-results .btn.secondary');
+                        if (returnBtn) {
+                            e.preventDefault();
+                            returnBtn.click();
+                        }
+                    }
+                }
+            }
+        });
     },
 
     handleSearchResult(courseId, moduleId, type) {
@@ -137,7 +269,7 @@ const hubApp = {
         this.clearSearch();
         this.enterCourse(courseId);
         if ((type === 'module' || type === 'question') && moduleId) {
-            setTimeout(() => this.startTest(moduleId), 150);
+            setTimeout(() => this.openModule(moduleId), 150);
         }
     },
 
@@ -190,6 +322,58 @@ const hubApp = {
         } catch (err) {
             this.hideLoading();
             alert(`Error: ${err.message}`);
+        }
+    },
+
+    async handlePDFUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        document.getElementById('ai-pdf-name').textContent = file.name;
+        const consoleEl = document.getElementById('ai-pdf-console');
+        consoleEl.classList.remove('hidden');
+        consoleEl.innerHTML = `Iniciando extracción de ${file.name}...<br>`;
+
+        try {
+            // Configure pdf.js worker
+            if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            
+            consoleEl.innerHTML += `PDF cargado. Total de páginas: ${pdf.numPages}<br>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\\n';
+                if (i % 10 === 0 || i === pdf.numPages) {
+                    consoleEl.innerHTML += `Páginas extraídas: ${i} / ${pdf.numPages}<br>`;
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+            }
+
+            consoleEl.innerHTML += `Extracción completa. Tamaño total: ${fullText.length} caracteres.<br>`;
+            
+            // Chunking: break into ~15k char blocks to respect token limits later
+            const chunkSize = 15000;
+            const chunks = [];
+            for (let i = 0; i < fullText.length; i += chunkSize) {
+                chunks.push(fullText.substring(i, i + chunkSize));
+            }
+
+            consoleEl.innerHTML += `Texto fragmentado en ${chunks.length} bloques listos para procesar.<br>`;
+            consoleEl.innerHTML += `<span style="color:#10b981">¡Éxito! El PDF ha sido estructurado localmente. Esta consola enviará los bloques a Claude/Gemini en la próxima versión.</span><br>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+
+        } catch (error) {
+            consoleEl.innerHTML += `<span style="color:#ef4444">Error al leer PDF: ${error.message}</span><br>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
         }
     },
 
@@ -432,7 +616,7 @@ const hubApp = {
                             : item.daysSince === 1 ? 'hace 1 d\u00eda'
                             : `hace ${item.daysSince} d\u00edas`;
             return `
-            <div class="sq-item" onclick="hubApp.enterCourseAndReview('${item.courseId}')">
+            <div class="sq-item" onclick="hubApp.enterCourseAndReview('${item.courseId}', '${item.domain}')">
                 <i class="fa-solid ${icon} sq-item-icon" style="color:${color}"></i>
                 <div class="sq-item-info">
                     <span class="sq-domain">${item.domain}</span>
@@ -450,12 +634,152 @@ const hubApp = {
             </div>
             <div class="sq-items">${rows}</div>
         </div>`;
+        
+        document.getElementById('daily-challenge-container').classList.remove('hidden');
     },
 
-    enterCourseAndReview(courseId) {
+    enterCourseAndReview(courseId, domain) {
         this.enterCourse(courseId);
-        // Let the view render, then launch Smart Review automatically
-        setTimeout(() => this.startSmartReview(), 150);
+        // Let the view render, then launch Spaced Repetition Review automatically
+        setTimeout(() => this.startSpacedRepetitionReview(domain), 150);
+    },
+
+    startSpacedRepetitionReview(domain) {
+        if (!this.currentCourse) return;
+        
+        const questions = HubStorage.getSpacedRepetitionQuestions(this.currentCourse.id, this.currentCourse, domain, 10);
+
+        if (questions.length === 0) {
+            alert('¡No hay preguntas disponibles para repasar en este dominio!');
+            return;
+        }
+
+        document.getElementById('test-title').textContent = `🧠 Repaso: ${domain}`;
+        document.getElementById('test-total').textContent = questions.length;
+
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions(questions);
+        this.currentTestId = '__spaced_review__';
+        this.failedQuestions = [];
+        this.currentQuestionIndex = 0;
+        this.testScore = 0;
+        this.currentSessionResults = [];
+        this.isReviewMode = true; // Don’t overwrite normal module scores, but we WILL track question stats
+
+        this.switchView('view-test');
+        this.renderQuestion();
+    },
+
+    startDailyChallenge() {
+        const packs = EngineStorage.getAllPacks();
+        let allDueQuestions = [];
+
+        // Gather spaced repetition questions across ALL due courses and domains
+        packs.forEach(pack => {
+            const dueDomains = HubStorage.getDueItems(pack.id).map(d => d.domain);
+            dueDomains.forEach(domain => {
+                const qs = HubStorage.getSpacedRepetitionQuestions(pack.id, pack, domain, 5); // 5 per domain to mix it up
+                // Tag them with courseId so we can save stats properly later
+                const taggedQs = qs.map(q => ({ ...q, _courseId: pack.id }));
+                allDueQuestions.push(...taggedQs);
+            });
+        });
+
+        if (allDueQuestions.length === 0) {
+            alert('¡No tienes repasos pendientes! Prueba haciendo un test nuevo primero.');
+            return;
+        }
+
+        // Shuffle and take top 15 max
+        allDueQuestions = allDueQuestions.sort(() => Math.random() - 0.5).slice(0, 15);
+
+        // We need a dummy "currentCourse" context for the test UI to work smoothly
+        // If there's no current course, just use the first one from the questions
+        this.currentCourse = EngineStorage.getPack(allDueQuestions[0]._courseId);
+
+        document.getElementById('test-title').textContent = '⚡ Daily Challenge';
+        document.getElementById('test-total').textContent = allDueQuestions.length;
+
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions(allDueQuestions);
+        this.currentTestId = '__daily_challenge__';
+        this.failedQuestions = [];
+        this.currentQuestionIndex = 0;
+        this.testScore = 0;
+        this.currentSessionResults = [];
+        this.isReviewMode = true; // Tracks per-question stats, but doesn't affect module scores
+
+        this.switchView('view-test');
+        this.renderQuestion();
+    },
+
+    startMockExam() {
+        const packs = EngineStorage.getAllPacks();
+        let allQuestions = [];
+
+        packs.forEach(pack => {
+            const mods = pack.modules || {};
+            Object.values(mods).forEach(m => {
+                if (m.questions) {
+                    m.questions.forEach(q => {
+                        allQuestions.push({ ...q, _courseId: pack.id });
+                    });
+                }
+            });
+        });
+
+        if (allQuestions.length === 0) {
+            alert('No hay preguntas disponibles. Importa un curso primero.');
+            return;
+        }
+
+        // Shuffle and pick 65
+        allQuestions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 65);
+
+        // Set state
+        this.currentCourse = EngineStorage.getPack(allQuestions[0]._courseId);
+        document.getElementById('test-title').textContent = '⏱️ Simulacro de Certificación';
+        document.getElementById('test-total').textContent = allQuestions.length;
+
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions(allQuestions);
+        this.currentTestId = '__mock_exam__';
+        this.failedQuestions = [];
+        this.currentQuestionIndex = 0;
+        this.testScore = 0;
+        this.currentSessionResults = [];
+        this.isReviewMode = false;
+        this.isMockExam = true;
+
+        this.startMockTimer(90); // 90 minutes
+        this.switchView('view-test');
+        this.renderQuestion();
+    },
+
+    startMockTimer(minutes) {
+        this.mockTimeRemaining = minutes * 60;
+        const timerEl = document.getElementById('mock-timer');
+        const display = document.getElementById('timer-display');
+        if (timerEl) timerEl.classList.remove('hidden');
+        
+        clearInterval(this.mockTimerInterval);
+        
+        const updateDisplay = () => {
+            const m = Math.floor(this.mockTimeRemaining / 60);
+            const s = this.mockTimeRemaining % 60;
+            if (display) display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        };
+
+        updateDisplay();
+
+        this.mockTimerInterval = setInterval(() => {
+            this.mockTimeRemaining--;
+            updateDisplay();
+            
+            if (this.mockTimeRemaining <= 0) {
+                clearInterval(this.mockTimerInterval);
+                alert('¡Tiempo agotado!');
+                this.currentQuestionIndex = this.currentTestQuestions.length; // Force end
+                this.nextQuestion();
+            }
+        }, 1000);
     },
 
     renderCourses() {
@@ -468,9 +792,11 @@ const hubApp = {
         if (packs.length === 0) {
             grid.innerHTML = '';
             emptyState.classList.remove('hidden');
+            document.getElementById('mock-exam-container')?.classList.add('hidden');
         } else {
             emptyState.classList.add('hidden');
             grid.innerHTML = packs.map(pack => this.buildCard(pack)).join('');
+            document.getElementById('mock-exam-container')?.classList.remove('hidden');
         }
         
         this.renderQuickResume(packs);
@@ -568,6 +894,19 @@ const hubApp = {
         </div>`;
     },
 
+    shuffleQuestionsAndOptions(questionsArray) {
+        return questionsArray.map(q => {
+            const qClone = JSON.parse(JSON.stringify(q));
+            const originalCorrect = qClone.options[qClone.correct];
+            qClone.options.sort(() => Math.random() - 0.5);
+            qClone.correct = qClone.options.findIndex(opt => 
+                (typeof opt === 'string' ? opt : opt.text) === 
+                (typeof originalCorrect === 'string' ? originalCorrect : originalCorrect.text)
+            );
+            return qClone;
+        }).sort(() => Math.random() - 0.5);
+    },
+
     enterCourse(courseId) {
         const pack = EngineStorage.getPack(courseId);
         if (!pack) return;
@@ -609,7 +948,7 @@ const hubApp = {
             }
 
             return `
-            <div class="card" onclick="hubApp.startTest('${key}')" style="cursor: pointer;">
+            <div class="card" onclick="hubApp.openModule('${key}')" style="cursor: pointer;">
                 <div class="card-icon test-icon" style="color: ${pack.theme.primary}"><i class="fa-solid fa-laptop-code"></i></div>
                 <div class="card-content">
                     <h4>${mod.title || key}</h4>
@@ -666,7 +1005,35 @@ const hubApp = {
         </div>`;
     },
 
-    // --- TEST LOGIC ---
+    // --- STUDY / TEST LOGIC ---
+
+    openModule(moduleId) {
+        if (!this.currentCourse || !this.currentCourse.modules[moduleId]) return;
+        
+        const moduleData = this.currentCourse.modules[moduleId];
+        
+        if (moduleData.content) {
+            // Show study theory view first
+            this.currentTestId = moduleId;
+            document.getElementById('study-title').textContent = moduleData.title || moduleId;
+            
+            // Format content: Simple text to HTML paragraphs if not already HTML/Markdown processed
+            let theoryHtml = moduleData.content;
+            if (!theoryHtml.includes('<') && !theoryHtml.includes('>')) {
+                theoryHtml = theoryHtml.split('\n\n').map(p => `<p>${p}</p>`).join('');
+            }
+            
+            document.getElementById('study-theory-text').innerHTML = theoryHtml;
+            
+            const btnStart = document.getElementById('btn-start-test-from-study');
+            btnStart.onclick = () => this.startTest(moduleId);
+            
+            this.switchView('view-study-module');
+        } else {
+            // No content, skip straight to test
+            this.startTest(moduleId);
+        }
+    },
 
     startTest(testId) {
         if (!this.currentCourse || !this.currentCourse.modules[testId]) return;
@@ -675,12 +1042,17 @@ const hubApp = {
         const testData = this.currentCourse.modules[testId];
         
         document.getElementById('test-title').textContent = testData.title || testId;
-        this.currentTestQuestions = [...(testData.questions || [])].sort(() => Math.random() - 0.5);
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions([...(testData.questions || [])]);
         this.currentQuestionIndex = 0;
         this.testScore = 0;
         this.failedQuestions = [];
         this.currentSessionResults = [];
         this.isReviewMode = false;
+        this.isMockExam = false;
+
+        const timerEl = document.getElementById('mock-timer');
+        if (timerEl) timerEl.classList.add('hidden');
+        clearInterval(this.mockTimerInterval);
 
         document.getElementById('test-total').textContent = this.currentTestQuestions.length;
         
@@ -689,11 +1061,6 @@ const hubApp = {
     },
 
     renderQuestion() {
-        if (this.currentQuestionIndex >= this.currentTestQuestions.length) {
-            this.finishTest();
-            return;
-        }
-
         const q = this.currentTestQuestions[this.currentQuestionIndex];
         document.getElementById('test-current').textContent = this.currentQuestionIndex + 1;
         document.getElementById('test-q-topic').textContent = q.domain || q.topic || 'General';
@@ -716,6 +1083,27 @@ const hubApp = {
         feedbackBox.innerHTML = '';
         
         document.getElementById('btn-test-next').classList.add('hidden');
+        
+        // Notes Logic
+        const noteInput = document.getElementById('question-note-input');
+        const noteStatus = document.getElementById('note-save-status');
+        if (noteInput) {
+            noteInput.value = HubStorage.getNote(q.id || q.question);
+        }
+        if (noteStatus) noteStatus.classList.add('hidden');
+    },
+
+    saveCurrentNote() {
+        if (this.currentTestQuestions.length === 0) return;
+        const q = this.currentTestQuestions[this.currentQuestionIndex];
+        const input = document.getElementById('question-note-input');
+        const status = document.getElementById('note-save-status');
+        
+        if (input && status) {
+            HubStorage.saveNote(q.id || q.question, input.value);
+            status.classList.remove('hidden');
+            setTimeout(() => status.classList.add('hidden'), 2000);
+        }
     },
 
     selectOption(index) {
@@ -731,10 +1119,13 @@ const hubApp = {
         const isCorrect = index === q.correct;
         const explanation = typeof selectedOpt === 'object' ? selectedOpt.explanation : (q.explanation || '');
 
-        // Track per-question history (not during review modes)
-        if (this.currentCourse && !this.isReviewMode) {
+        // Track per-question history (we want to track it during Spaced Repetition / Daily Challenge too)
+        // Only skip tracking if it's the post-test "Repasar Falladas" (failedQuestions review)
+        if (this.currentTestId !== '__failed_review__' && (this.currentCourse || q._courseId)) {
             const domain = q.domain || q.topic || 'General';
-            HubStorage.saveQuestionResult(this.currentCourse.id, this.currentTestId, q.question, isCorrect, domain);
+            const targetCourseId = q._courseId || this.currentCourse.id;
+            // Only save result if we have a valid test ID or if it's a dynamic review
+            HubStorage.saveQuestionResult(targetCourseId, this.currentTestId, q.question, isCorrect, domain);
         }
 
         // Always track for the in-session domain breakdown on results screen
@@ -745,42 +1136,81 @@ const hubApp = {
         
         let explanationHtml = explanation ? `<div class="explanation-text">${explanation}</div>` : '';
         
-        if (isCorrect) {
-            options[index].classList.add('correct');
-            this.testScore++;
-            feedbackBox.className = 'feedback-box success';
-            feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-check-circle"></i></div><div class="feedback-text"><strong>¡Correcto!</strong>${explanationHtml}</div>`;
+        if (this.isMockExam) {
+            // Blind mode
+            options[index].classList.add('selected');
+            if (isCorrect) this.testScore++;
+            else this.failedQuestions.push(q);
         } else {
-            options[index].classList.add('incorrect');
-            options[q.correct].classList.add('correct');
-            this.failedQuestions.push(q);
-            feedbackBox.className = 'feedback-box error';
-            feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-xmark-circle"></i></div><div class="feedback-text"><strong>Incorrecto.</strong>${explanationHtml}</div>`;
+            // Normal mode
+            if (isCorrect) {
+                options[index].classList.add('correct');
+                this.testScore++;
+                feedbackBox.className = 'feedback-box success';
+                feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-check-circle"></i></div><div class="feedback-text"><strong>¡Correcto!</strong>${explanationHtml}</div>`;
+            } else {
+                options[index].classList.add('incorrect');
+                options[q.correct].classList.add('correct');
+                this.failedQuestions.push(q);
+                feedbackBox.className = 'feedback-box error';
+                feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-xmark-circle"></i></div><div class="feedback-text"><strong>Incorrecto.</strong>${explanationHtml}</div>`;
+            }
         }
         
         document.getElementById('btn-test-next').classList.remove('hidden');
     },
 
     nextQuestion() {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        
         this.currentQuestionIndex++;
-        this.renderQuestion();
+        if (this.currentQuestionIndex >= this.currentTestQuestions.length) {
+            this.finishTest();
+        } else {
+            this.renderQuestion();
+        }
     },
 
     finishTest() {
+        clearInterval(this.mockTimerInterval);
+        
         const total = this.currentTestQuestions.length;
         const pct = total > 0 ? Math.round((this.testScore / total) * 100) : 0;
 
-        if (!this.isReviewMode) {
+        if (!this.isReviewMode && !this.isMockExam) {
             HubStorage.saveTestResult(this.currentCourse.id, this.currentTestId, this.testScore, total);
         }
 
-        document.getElementById('score-message').textContent = `Puntaje: ${this.testScore} de ${total} (${pct}%)`;
+        if (this.isMockExam) {
+            const awsScore = Math.round(100 + (this.testScore / total) * 900);
+            document.getElementById('score-message').textContent = `Puntaje: ${awsScore} / 1000`;
+            const passed = awsScore >= 700;
+            document.getElementById('score-phrase').textContent = passed ? '¡Aprobado! Estás listo para certificarte.' : 'No aprobado. Sigue practicando los dominios débiles.';
+            if (passed && typeof confetti === 'function') {
+                confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            }
+            if (passed) HubStorage.awardAchievement('mock_5'); // Assuming 1 passes gives it for now to test
+        } else {
+            document.getElementById('score-message').textContent = `Puntaje: ${this.testScore} de ${total} (${pct}%)`;
 
-        let phrase = '¡Sigue practicando!';
-        if (pct >= 90) phrase = '¡Excelente! Tienes dominio total.';
-        else if (pct >= 70) phrase = '¡Muy buen trabajo!';
+            let phrase = '¡Sigue practicando!';
+            if (pct >= 90) phrase = '¡Excelente! Tienes dominio total.';
+            else if (pct >= 70) phrase = '¡Muy buen trabajo!';
 
-        document.getElementById('score-phrase').textContent = phrase;
+            document.getElementById('score-phrase').textContent = phrase;
+
+            if (pct === 100) {
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#3b82f6', '#10b981', '#f59e0b']
+                    });
+                }
+                HubStorage.awardAchievement('first_100');
+            }
+        }
 
         const btnRepaso = document.getElementById('btn-repaso');
         if (btnRepaso) btnRepaso.classList.toggle('hidden', this.failedQuestions.length === 0);
@@ -862,12 +1292,15 @@ const hubApp = {
         const domainContainer = document.getElementById('analytics-domains');
         if (domainContainer) {
             let domainHtml = '';
+            let radarLabels = [];
+            let radarData = [];
+
             packs.forEach(pack => {
                 const domainStats = HubStorage.getDomainStats(pack.id);
                 const entries = Object.entries(domainStats);
                 if (entries.length === 0) return;
 
-                // Sort worst domain first
+                // Sort worst domain first for the HTML list
                 entries.sort((a, b) => {
                     const accA = a[1].correct / (a[1].correct + a[1].incorrect);
                     const accB = b[1].correct / (b[1].correct + b[1].incorrect);
@@ -881,6 +1314,11 @@ const hubApp = {
                     const total = stats.correct + stats.incorrect;
                     const pct   = total > 0 ? Math.round(stats.correct / total * 100) : 0;
                     const color = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
+                    
+                    // For the Radar Chart
+                    radarLabels.push(domain);
+                    radarData.push(pct);
+
                     domainHtml += `
                     <div class="domain-bar-item">
                         <div class="domain-bar-header">
@@ -898,6 +1336,75 @@ const hubApp = {
 
             domainContainer.innerHTML = domainHtml ||
                 '<p class="analytics-empty">Completa tests para ver tu rendimiento por dominio.</p>';
+
+            // Render Radar Chart if Chart.js is loaded and we have data
+            if (typeof Chart !== 'undefined' && radarLabels.length > 0) {
+                const ctx = document.getElementById('radar-chart');
+                if (ctx) {
+                    // Destroy previous instance if it exists
+                    if (window.myRadarChart) window.myRadarChart.destroy();
+                    
+                    window.myRadarChart = new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: radarLabels,
+                            datasets: [{
+                                label: 'Porcentaje de Aciertos (%)',
+                                data: radarData,
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    pointLabels: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 12 } },
+                                    ticks: { min: 0, max: 100, stepSize: 20, display: false, backdropColor: 'transparent' }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+                }
+            } else if (typeof Chart !== 'undefined') {
+                const ctx = document.getElementById('radar-chart');
+                if (ctx && window.myRadarChart) window.myRadarChart.destroy();
+            }
+        }
+
+        // ── Gamification: Achievements ───────────────────────
+        const achContainer = document.getElementById('achievements-container');
+        if (achContainer) {
+            const unlocked = HubStorage.getAchievements();
+            const allAchievements = [
+                { id: 'streak_7', icon: 'fa-fire', color: '#f97316', title: 'Constancia', desc: 'Racha de 7 días' },
+                { id: 'first_100', icon: 'fa-star', color: '#fbbf24', title: 'Perfección', desc: 'Saca un 100% en un test' },
+                { id: 'mock_5', icon: 'fa-stopwatch', color: '#ef4444', title: 'Arquitecto Junior', desc: 'Aprueba un simulacro' }
+            ];
+            
+            achContainer.innerHTML = allAchievements.map(ach => {
+                const isUnlocked = unlocked.includes(ach.id);
+                const opacity = isUnlocked ? '1' : '0.3';
+                const filter = isUnlocked ? 'none' : 'grayscale(100%)';
+                return `
+                <div class="achievement-card" style="opacity: ${opacity}; filter: ${filter}; display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; width: 120px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: ${ach.color}20; color: ${ach.color}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.5rem;">
+                        <i class="fa-solid ${ach.icon}"></i>
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--text-primary);">${ach.title}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">${ach.desc}</div>
+                </div>`;
+            }).join('');
         }
 
         // ── Weak Modules ───────────────────────────────
@@ -950,11 +1457,12 @@ const hubApp = {
         const moduleTitle = this.currentCourse.modules[this.currentTestId]?.title || this.currentTestId;
         document.getElementById('test-title').textContent = `Repaso — ${moduleTitle}`;
 
-        this.currentTestQuestions = questionsToReview.sort(() => Math.random() - 0.5);
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions(questionsToReview);
         this.failedQuestions = [];
         this.currentQuestionIndex = 0;
         this.testScore = 0;
         this.isReviewMode = true;
+        this.currentTestId = '__failed_review__'; // explicitly tag as failed review so stats aren't recorded again
 
         document.getElementById('test-total').textContent = this.currentTestQuestions.length;
 
@@ -974,7 +1482,7 @@ const hubApp = {
         document.getElementById('test-title').textContent = '🧠 Repaso Inteligente';
         document.getElementById('test-total').textContent = questions.length;
 
-        this.currentTestQuestions = questions;
+        this.currentTestQuestions = this.shuffleQuestionsAndOptions(questions);
         this.currentTestId = '__smart_review__';
         this.failedQuestions = [];
         this.currentQuestionIndex = 0;
@@ -1164,14 +1672,63 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
         return text;
     },
 
+    // ── Export / Import User Data ────────────────────────────────
+
+    exportUserData() {
+        const globalData = HubStorage.getGlobal();
+        const dataStr = JSON.stringify(globalData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = 'studyhub_backup_' + new Date().toISOString().split('T')[0] + '.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    },
+
+    importUserData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data && typeof data === 'object') {
+                    localStorage.setItem('studyhub_global', JSON.stringify(data));
+                    alert('Datos importados correctamente. La aplicación se recargará.');
+                    window.location.reload();
+                } else {
+                    throw new Error('Formato inválido');
+                }
+            } catch (err) {
+                alert('Error al importar el archivo: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    // ── Voice Coach ──────────────────────────────────────────────
+
     readTestAloud() {
         if (!('speechSynthesis' in window)) return;
         const q = this.currentTestQuestions[this.currentQuestionIndex];
         if (!q) return;
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(q.question);
-        msg.lang = 'es-ES';
-        msg.rate = 1.1;
+        window.speechSynthesis.cancel(); // Stop anything currently playing
+        
+        // Build the string to read: Question, followed by each option
+        let textToRead = q.question + '. ';
+        const labels = ['Opción A.', 'Opción B.', 'Opción C.', 'Opción D.'];
+        
+        q.options.forEach((opt, index) => {
+            const optText = typeof opt === 'object' ? opt.text : opt;
+            textToRead += labels[index] + ' ' + optText + '. ';
+        });
+
+        const msg = new SpeechSynthesisUtterance(textToRead);
+        msg.lang = 'en-US'; // Use English for AWS CLF-C02
+        msg.rate = 1.0;
         window.speechSynthesis.speak(msg);
     }
 };

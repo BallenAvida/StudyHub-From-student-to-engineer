@@ -58,6 +58,12 @@
 
 .option.correct .option-letter { background: #10b981; color: white; border: none; }
 .option.incorrect .option-letter { background: #ef4444; color: white; border: none; }
+.option.selected {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+.option.selected .option-letter { background: #3b82f6; color: white; border: none; }
 
 .option-text {
     font-size: 1rem;
@@ -120,9 +126,10 @@
 /* ─── Sidebar ────────────────────────────────────────────────── */
 .sidebar {
     width: 260px;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(20px);
-    border-right: 1px solid var(--glass-border);
+    background: rgba(30, 41, 59, 0.5); /* Semi-transparent */
+    backdrop-filter: blur(12px); /* Glassmorphism */
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
@@ -1109,6 +1116,22 @@
     gap: 0.5rem;
 }
 
+.card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    cursor: pointer;
+}
+.card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+}
+
 .sq-item {
     display: flex;
     align-items: center;
@@ -1168,6 +1191,25 @@
 }
 
 /* ─── Results: Domain Breakdown Panel ───────────────────────── */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.dashboard-view {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .rd-panel {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.07);

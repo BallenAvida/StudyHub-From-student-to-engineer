@@ -15,6 +15,7 @@ The Study Hub Engine uses a standardized JSON format to ingest and render course
   "modules": {
     "module-id-1": {
       "title": "string (Module Title)",
+      "content": "string (Markdown or HTML theory for studying)",
       "questions": [
         {
           "topic": "string",

@@ -34,6 +34,8 @@ const EngineStorage = {
 const HubStorage = {
     COURSES_KEY: 'studyhub_courses',
     GLOBAL_KEY:  'studyhub_global',
+    NOTES_KEY:   'studyhub_notes',
+    ACHIEVEMENTS_KEY: 'studyhub_achievements',
 
     getAllCourses() {
         try { return JSON.parse(localStorage.getItem(this.COURSES_KEY) || '{}'); }
@@ -84,7 +86,50 @@ const HubStorage = {
             global.totalSessions   = (global.totalSessions || 0) + 1;
 
             localStorage.setItem(this.GLOBAL_KEY, JSON.stringify(global));
+
+            if (global.streak.count >= 7 && !this.hasAchievement('streak_7')) {
+                this.awardAchievement('streak_7');
+            }
         } catch {}
+    },
+
+    getNote(questionId) {
+        try {
+            const notes = JSON.parse(localStorage.getItem(this.NOTES_KEY) || '{}');
+            return notes[questionId] || '';
+        } catch { return ''; }
+    },
+
+    saveNote(questionId, text) {
+        try {
+            const notes = JSON.parse(localStorage.getItem(this.NOTES_KEY) || '{}');
+            notes[questionId] = text;
+            localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+            return true;
+        } catch { return false; }
+    },
+
+    getAchievements() {
+        try {
+            return JSON.parse(localStorage.getItem(this.ACHIEVEMENTS_KEY) || '[]');
+        } catch { return []; }
+    },
+
+    hasAchievement(id) {
+        return this.getAchievements().includes(id);
+    },
+
+    awardAchievement(id) {
+        if (this.hasAchievement(id)) return false;
+        try {
+            const achs = this.getAchievements();
+            achs.push(id);
+            localStorage.setItem(this.ACHIEVEMENTS_KEY, JSON.stringify(achs));
+            
+            // Dispatch a custom event to show notification
+            document.dispatchEvent(new CustomEvent('achievementUnlocked', { detail: { id } }));
+            return true;
+        } catch { return false; }
     },
 
     getGlobal() {
@@ -216,6 +261,70 @@ const HubStorage = {
                 } : null;
             })
             .filter(Boolean);
+    },
+
+    /**
+     * Advanced Spaced Repetition algorithm.
+     * Fetches questions prioritized by fail rate AND days since last seen.
+     * Includes questions never seen before to ensure full coverage.
+     * @param {string} courseId
+     * @param {object} pack
+     * @param {string} domainLimit (optional) - restrict to a specific domain
+     * @param {number} maxCount - number of questions to return
+     * @returns {Array}
+     */
+    getSpacedRepetitionQuestions(courseId, pack, domainLimit = null, maxCount = 10) {
+        const allStats = this._getQuestionStats();
+        const now = Date.now();
+        const DAY = 86400000;
+
+        // Build list of all questions in the pack
+        const allQuestions = [];
+        Object.keys(pack.modules || {}).forEach(moduleKey => {
+            const mod = pack.modules[moduleKey];
+            (mod.questions || []).forEach(q => {
+                const dom = q.domain || q.topic || 'General';
+                if (!domainLimit || dom === domainLimit) {
+                    allQuestions.push({
+                        ...q,
+                        _hash: this._hashText(q.question),
+                        _moduleTitle: mod.title || moduleKey,
+                        _domain: dom
+                    });
+                }
+            });
+        });
+
+        // Calculate priority score for each question
+        const scoredQuestions = allQuestions.map(q => {
+            const key = `${courseId}::${q._hash}`;
+            const stat = allStats[key];
+            
+            let priority = 0;
+            
+            if (!stat) {
+                // New question, never seen. Give a medium-high baseline priority (e.g. 60)
+                // so it gets introduced eventually.
+                priority = 60 + (Math.random() * 10); 
+            } else {
+                const total = stat.correct + stat.incorrect;
+                const failRate = total > 0 ? stat.incorrect / total : 0;
+                const daysSince = stat.lastSeen ? (now - stat.lastSeen) / DAY : 999;
+                
+                // Priority Formula:
+                // High fail rate is heavily weighted (up to 100 points)
+                // Days since last seen adds weight over time (e.g., +2 points per day)
+                // If they got it right, the fail rate is 0, so priority is purely based on time elapsed.
+                priority = (failRate * 100) + (daysSince * 2);
+            }
+
+            return { ...q, _priority: priority };
+        });
+
+        // Sort by priority descending
+        scoredQuestions.sort((a, b) => b._priority - a._priority);
+
+        return scoredQuestions.slice(0, maxCount);
     },
 
     /**
