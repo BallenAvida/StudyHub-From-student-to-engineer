@@ -19,3 +19,12 @@ El registro de mi evolución técnica desde Técnico en Análisis de Sistemas ha
 **Lección aprendida:** Como futuro ingeniero, he entendido que es mejor pasar tres semanas construyendo un motor sólido y agnóstico que pasar tres años pegando parches en un código estático que no escala. Esto hará que mi proyecto sea verdaderamente Open Source, permitiendo que cualquier persona cargue sus propios apuntes.
 
 **Hito del día:** Aprobación del plan de refactorización para transformar el Hub en una Single Page Application (SPA) con ingesta dinámica de datos.
+
+## Entrada #3: La Batalla contra NotebookLM (Mayo 2026)
+**Contexto:** Diseñando el futuro del Hub para que sea un verdadero asistente de estudio interactivo y dinámico, inspirado en las mejores capacidades de NotebookLM.
+
+**Roadmap de Innovación IA:**
+1. **Chat de Estudio ("Pregúntale a tus Apuntes"):** Integrar un chat interactivo por curso/módulo que use la clave de API del usuario (Gemini/Claude) para responder dudas directamente sobre la materia cargada.
+2. **Audio Resúmenes ("Podcasts Educativos"):** Generar guiones dinámicos de debate entre dos locutores usando IA y reproducirlos alternando voces sintéticas del navegador (`SpeechSynthesis`).
+3. **Materiales de Apoyo Automatizados:** Botones en los módulos para autogenerar Preguntas Frecuentes (FAQs), Glosarios de términos complejos y resúmenes ejecutivos (Briefing Docs).
+4. **Bloc de Notas Inteligente:** Un editor de notas del curso enriquecido con capacidades de la IA para expandir ideas, crear analogías o resumir apuntes guardados.

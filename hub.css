@@ -1430,3 +1430,67 @@
     .hub-global-stats { width: 100%; justify-content: space-around; }
     .hub-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── Python Lab ─────────────────────────────────────────────── */
+#python-layout-container {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 1.5rem;
+    height: 520px;
+    margin-bottom: 2rem;
+}
+
+#python-terminal {
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    background-color: #05070c;
+    color: #34d399;
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    border-radius: 0 0 16px 16px;
+    text-shadow: 0 0 2px rgba(52, 211, 153, 0.3);
+}
+
+/* Custom scrollbar for console */
+#python-terminal::-webkit-scrollbar {
+    width: 6px;
+}
+#python-terminal::-webkit-scrollbar-track {
+    background: #05070c;
+}
+#python-terminal::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+#python-terminal::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.python-controls-panel {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.python-controls-panel label {
+    user-select: none;
+    transition: color 0.2s;
+}
+.python-controls-panel label:hover {
+    color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+    #python-layout-container {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    #python-editor-container {
+        height: 350px;
+    }
+    #python-terminal {
+        height: 250px;
+    }
+}
+

@@ -54,6 +54,10 @@
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Calendario</span>
                 </a>
+                <a href="#" class="nav-item" data-target="view-python-lab">
+                    <i class="fa-brands fa-python" style="color: #ffe873;"></i>
+                    <span>Python Lab</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -440,6 +444,102 @@
                         <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5;" onclick="if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción es irreversible.')) { const apiCfg = localStorage.getItem('studyhub_api_config'); localStorage.clear(); if(apiCfg) localStorage.setItem('studyhub_api_config', apiCfg); window.location.reload(); }">
                             <i class="fa-solid fa-trash"></i> Borrar Todo Mi Progreso
                         </button>
+                    </div>
+                </div>
+
+                <!-- PYTHON LAB VIEW (SPA) -->
+                <div id="view-python-lab" class="dashboard-view hidden">
+                    <div class="view-header" style="margin-bottom: 0.5rem;">
+                        <h2>
+                            <i class="fa-brands fa-python" style="color: #ffe873; margin-right: 10px;"></i>
+                            Python Lab
+                        </h2>
+                        <div class="progress-stats" id="python-engine-status" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-circle-notch fa-spin" id="python-status-spinner" style="display: none;"></i>
+                            <span id="python-status-text">Clic en Ejecutar para iniciar Python</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem; margin-top: -0.5rem;">Aprende Python escribiendo y ejecutando código directamente en tu navegador.</p>
+
+                    <!-- Control Panel -->
+                    <div class="glass-panel python-controls-panel" style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <!-- Dropdown for Challenges -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <select id="python-challenge-select" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; font-family: inherit; font-size: 0.9rem;" onchange="hubApp.loadPythonChallenge(this.value)">
+                                    <option value="">-- Cargar Desafío o Ejercicio --</option>
+                                    <option value="sandbox">Sandbox (Código libre)</option>
+                                    <option value="suma">Desafío 1: Suma de dos números</option>
+                                    <option value="mayor">Desafío 2: Encontrar el número mayor</option>
+                                    <option value="promedio">Desafío 3: Promedio de una lista</option>
+                                    <option value="contrasena">Desafío 4: Validar longitud de contraseña</option>
+                                    <option value="paridad">Desafío 5: Determinar si es par o impar</option>
+                                </select>
+                            </div>
+
+                            <button class="btn primary" id="btn-run-python" onclick="hubApp.runPythonCode()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                <i class="fa-solid fa-play"></i> Ejecutar
+                            </button>
+                            <button class="btn secondary" id="btn-verify-challenge" onclick="hubApp.verifyPythonChallenge()" style="padding: 0.5rem 1rem; font-size: 0.9rem; display: none; background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+                                <i class="fa-solid fa-circle-check"></i> Verificar
+                            </button>
+                            <button class="btn secondary" onclick="hubApp.explainPythonCode()" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
+                                <i class="fa-solid fa-brain"></i> Explicar Código
+                            </button>
+                            <button class="btn secondary" id="btn-debug-code" onclick="hubApp.debugPythonCode()" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; display: none;">
+                                <i class="fa-solid fa-bug"></i> Depurar Error
+                            </button>
+                        </div>
+
+                        <!-- Toggles for IntelliSense & AI Copilot -->
+                        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; color: var(--text-secondary);">
+                                <input type="checkbox" id="toggle-local-intellisense" checked style="accent-color: var(--primary);">
+                                IntelliSense Local
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; color: var(--text-secondary);" title="Usa tu clave de API de Gemini/Claude">
+                                <input type="checkbox" id="toggle-ai-copilot" style="accent-color: #f43f5e;" onchange="hubApp.toggleAiCopilot(this.checked)">
+                                Copilot IA (Gemini/Claude)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Challenge Info Box -->
+                    <div id="python-challenge-info" class="glass-panel hidden" style="padding: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary); background: rgba(59, 130, 246, 0.05);">
+                        <h4 id="challenge-title" style="margin-bottom: 0.5rem; color: var(--primary);">Título del Desafío</h4>
+                        <p id="challenge-desc" style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.5rem;">Instrucciones del desafío.</p>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <strong>Ejemplo:</strong> <code id="challenge-example" style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: monospace;">sumar(2, 3) -> 5</code>
+                        </div>
+                    </div>
+
+                    <!-- Layout: Editor & Console -->
+                    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem; height: 500px; min-height: 400px; margin-bottom: 2rem;" id="python-layout-container">
+                        <!-- Editor Container -->
+                        <div class="glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--glass-border); position: relative; margin-bottom: 0;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-code"></i> editor.py</span>
+                                <button class="btn-icon" onclick="if(confirm('¿Limpiar todo el editor?')) { window.pythonEditor?.setValue('# Escribe tu código de Python aquí\n'); }" style="width: 28px; height: 28px; font-size: 0.8rem; border-radius: 6px;" title="Limpiar Editor">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                            <div id="python-editor-container" style="flex-grow: 1; width: 100%;">
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                                    <div class="ai-spinner" style="margin-right: 10px;"></div> Cargando Editor...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Console / Output Container -->
+                        <div class="glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--glass-border); margin-bottom: 0;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-terminal"></i> terminal</span>
+                                <button class="btn-icon" onclick="document.getElementById('python-terminal').innerHTML = ''; document.getElementById('btn-debug-code').style.display = 'none';" style="width: 28px; height: 28px; font-size: 0.8rem; border-radius: 6px;" title="Limpiar Terminal">
+                                    <i class="fa-solid fa-eraser"></i>
+                                </button>
+                            </div>
+                            <div id="python-terminal" style="flex-grow: 1; padding: 1rem; background: #080c14; color: #34d399; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; overflow-y: auto; white-space: pre-wrap; line-height: 1.4;">Estudiante@StudyHub:~$ Listo para ejecutar tu código.</div>
+                        </div>
                     </div>
                 </div>
             </div>

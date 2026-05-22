@@ -540,6 +540,7 @@ const hubApp = {
         });
         if (viewId === 'view-analiticas') this.loadAnalytics();
         if (viewId === 'view-configuracion') this.loadApiConfigForm();
+        if (viewId === 'view-python-lab') this.initPythonLab();
     },
 
     goHome() {
@@ -1725,11 +1726,570 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
             const optText = typeof opt === 'object' ? opt.text : opt;
             textToRead += labels[index] + ' ' + optText + '. ';
         });
-
+ 
         const msg = new SpeechSynthesisUtterance(textToRead);
         msg.lang = 'en-US'; // Use English for AWS CLF-C02
         msg.rate = 1.0;
         window.speechSynthesis.speak(msg);
+    },
+ 
+    // ── Python Lab (Interactive Python Playground) ─────────────
+ 
+    pythonChallenges: {
+        suma: {
+            title: "Suma de dos números",
+            desc: "Define una función llamada `sumar(a, b)` que reciba dos parámetros y retorne su suma.",
+            example: "sumar(5, 7) -> 12",
+            initialCode: "def sumar(a, b):\n    # Escribe tu código aquí\n    pass\n",
+            testScript: `
+try:
+    assert sumar(2, 3) == 5, "sumar(2, 3) debe retornar 5"
+    assert sumar(-1, 1) == 0, "sumar(-1, 1) debe retornar 0"
+    assert sumar(10.5, 2.5) == 13.0, "sumar(10.5, 2.5) debe retornar 13.0"
+    print("¡TODAS LAS PRUEBAS PASADAS! Excelente trabajo.")
+except AssertionError as e:
+    print(f"FALLÓ LA PRUEBA: {e}")
+    raise AssertionError(f"La prueba de suma falló: {e}")
+except NameError as e:
+    print("FALLÓ LA PRUEBA: La función 'sumar' no está definida.")
+    raise NameError("La función 'sumar' no está definida.")
+except Exception as e:
+    print(f"ERROR AL EJECUTAR: {e}")
+    raise e
+`
+        },
+        mayor: {
+            title: "Encontrar el número mayor",
+            desc: "Define una función llamada `encontrar_mayor(a, b)` que devuelva el número más grande de los dos. Si son iguales, devuelve cualquiera.",
+            example: "encontrar_mayor(10, 20) -> 20",
+            initialCode: "def encontrar_mayor(a, b):\n    # Escribe tu código aquí\n    pass\n",
+            testScript: `
+try:
+    assert encontrar_mayor(10, 20) == 20, "encontrar_mayor(10, 20) debe retornar 20"
+    assert encontrar_mayor(5, -5) == 5, "encontrar_mayor(5, -5) debe retornar 5"
+    assert encontrar_mayor(7, 7) == 7, "encontrar_mayor(7, 7) debe retornar 7"
+    print("¡TODAS LAS PRUEBAS PASADAS! Excelente trabajo.")
+except AssertionError as e:
+    print(f"FALLÓ LA PRUEBA: {e}")
+    raise AssertionError(f"La prueba de mayor falló: {e}")
+except NameError as e:
+    print("FALLÓ LA PRUEBA: La función 'encontrar_mayor' no está definida.")
+    raise NameError("La función 'encontrar_mayor' no está definida.")
+except Exception as e:
+    print(f"ERROR AL EJECUTAR: {e}")
+    raise e
+`
+        },
+        promedio: {
+            title: "Promedio de una lista",
+            desc: "Define una función llamada `calcular_promedio(numeros)` que reciba una lista de números y devuelva su promedio aritmético (float). Si la lista está vacía, debe retornar 0.",
+            example: "calcular_promedio([10, 20, 30]) -> 20.0",
+            initialCode: "def calcular_promedio(numeros):\n    # Escribe tu código aquí\n    pass\n",
+            testScript: `
+try:
+    assert calcular_promedio([10, 20, 30]) == 20.0, "calcular_promedio([10, 20, 30]) debe retornar 20.0"
+    assert calcular_promedio([5]) == 5.0, "calcular_promedio([5]) debe retornar 5.0"
+    assert calcular_promedio([]) == 0, "calcular_promedio([]) para una lista vacía debe retornar 0"
+    print("¡TODAS LAS PRUEBAS PASADAS! Excelente trabajo.")
+except AssertionError as e:
+    print(f"FALLÓ LA PRUEBA: {e}")
+    raise AssertionError(f"La prueba de promedio falló: {e}")
+except NameError as e:
+    print("FALLÓ LA PRUEBA: La función 'calcular_promedio' no está definida.")
+    raise NameError("La función 'calcular_promedio' no está definida.")
+except Exception as e:
+    print(f"ERROR AL EJECUTAR: {e}")
+    raise e
+`
+        },
+        contrasena: {
+            title: "Validar longitud de contraseña",
+            desc: "Define una función llamada `validar_contrasena(clave)` que devuelva `True` si la contraseña tiene 8 o más caracteres de largo, y `False` de lo contrario.",
+            example: "validar_contrasena('12345678') -> True",
+            initialCode: "def validar_contrasena(clave):\n    # Escribe tu código aquí\n    pass\n",
+            testScript: `
+try:
+    assert validar_contrasena("1234567") == False, "validar_contrasena('1234567') debe retornar False"
+    assert validar_contrasena("12345678") == True, "validar_contrasena('12345678') debe retornar True"
+    assert validar_contrasena("aiepprogramacion") == True, "validar_contrasena('aiepprogramacion') debe retornar True"
+    print("¡TODAS LAS PRUEBAS PASADAS! Excelente trabajo.")
+except AssertionError as e:
+    print(f"FALLÓ LA PRUEBA: {e}")
+    raise AssertionError(f"La prueba de contraseña falló: {e}")
+except NameError as e:
+    print("FALLÓ LA PRUEBA: La función 'validar_contrasena' no está definida.")
+    raise NameError("La función 'validar_contrasena' no está definida.")
+except Exception as e:
+    print(f"ERROR AL EJECUTAR: {e}")
+    raise e
+`
+        },
+        paridad: {
+            title: "Determinar si es par o impar",
+            desc: "Define una función llamada `es_par(numero)` que devuelva la cadena `'par'` si el número es par, o `'impar'` si el número es impar.",
+            example: "es_par(4) -> 'par'",
+            initialCode: "def es_par(numero):\n    # Escribe tu código aquí\n    pass\n",
+            testScript: `
+try:
+    assert es_par(4) == "par", "es_par(4) debe retornar 'par'"
+    assert es_par(7) == "impar", "es_par(7) debe retornar 'impar'"
+    assert es_par(0) == "par", "es_par(0) debe retornar 'par'"
+    print("¡TODAS LAS PRUEBAS PASADAS! Excelente trabajo.")
+except AssertionError as e:
+    print(f"FALLÓ LA PRUEBA: {e}")
+    raise AssertionError(f"La prueba de paridad falló: {e}")
+except NameError as e:
+    print("FALLÓ LA PRUEBA: La función 'es_par' no está definida.")
+    raise NameError("La función 'es_par' no está definida.")
+except Exception as e:
+    print(f"ERROR AL EJECUTAR: {e}")
+    raise e
+`
+        }
+    },
+ 
+    activeChallengeId: null,
+    isPyodideLoading: false,
+    isMonacoLoading: false,
+ 
+    async async_loadScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = () => resolve();
+            script.onerror = (e) => reject(e);
+            document.body.appendChild(script);
+        });
+    },
+ 
+    async initPythonLab() {
+        // 1. Load Monaco Editor
+        if (typeof monaco === 'undefined' && !this.isMonacoLoading) {
+            this.isMonacoLoading = true;
+            this.appendTerminalOutput("Cargando Monaco Editor (Editor de VS Code)...\n", "stdout");
+            try {
+                if (typeof require === 'undefined' || typeof require.config === 'undefined') {
+                    await this.async_loadScript('https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js');
+                }
+                this.loadMonacoEditor();
+            } catch (err) {
+                this.appendTerminalOutput(`Error cargando Monaco Editor: ${err.message}\n`, "stderr");
+                this.isMonacoLoading = false;
+            }
+        } else if (typeof monaco !== 'undefined') {
+            this.loadMonacoEditor();
+        }
+ 
+        // 2. Load Pyodide (lazy load on UI entry, but run is where it blocks)
+        if (typeof loadPyodide === 'undefined' && !this.isPyodideLoading) {
+            this.isPyodideLoading = true;
+            this.appendTerminalOutput("Cargando motor de Python (Pyodide WebAssembly)...\n", "stdout");
+            try {
+                await this.async_loadScript('https://cdn.jsdelivr.net/npm/pyodide@0.26.1/pyodide.js');
+                this.loadPyodideEngine();
+            } catch (err) {
+                this.appendTerminalOutput(`Error cargando Pyodide: ${err.message}\n`, "stderr");
+                this.isPyodideLoading = false;
+            }
+        } else if (typeof loadPyodide !== 'undefined' && !window.pyodide) {
+            this.loadPyodideEngine();
+        }
+    },
+ 
+    async loadMonacoEditor() {
+        if (window.pythonEditor) {
+            // Editor already created, just trigger layout refresh
+            setTimeout(() => window.pythonEditor.layout(), 100);
+            return;
+        }
+        
+        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], () => {
+            const container = document.getElementById('python-editor-container');
+            if (container) container.innerHTML = ''; // Clear spinner
+            
+            const defaultCode = "# Escribe tu código de Python aquí\nprint(\"¡Hola desde el Python Lab de StudyHub!\")\n\n# Puedes escribir funciones, bucles, etc.\nfor i in range(3):\n    print(f\"Iteración {i + 1}\")\n";
+            
+            window.pythonEditor = monaco.editor.create(container, {
+                value: localStorage.getItem('studyhub_python_code') || defaultCode,
+                language: 'python',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Courier New', monospace",
+                lineHeight: 20,
+                padding: { top: 10, bottom: 10 }
+            });
+ 
+            // Save code locally to preserve work
+            window.pythonEditor.onDidChangeModelContent(() => {
+                localStorage.setItem('studyhub_python_code', window.pythonEditor.getValue());
+            });
+ 
+            this.registerAICompletionProvider();
+            this.isMonacoLoading = false;
+            this.appendTerminalOutput("VS Code Editor cargado con éxito. Autocompletado local (IntelliSense) activo.\n", "stdout");
+        });
+    },
+ 
+    async loadPyodideEngine() {
+        if (window.pyodide) return;
+        
+        const spinner = document.getElementById('python-status-spinner');
+        const text = document.getElementById('python-status-text');
+        const statusBlock = document.getElementById('python-engine-status');
+ 
+        if (spinner) spinner.style.display = 'inline-block';
+        if (text) text.textContent = 'Cargando motor de Python...';
+        if (statusBlock) {
+            statusBlock.style.background = 'rgba(245, 158, 11, 0.15)';
+            statusBlock.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            statusBlock.style.color = '#f59e0b';
+        }
+ 
+        try {
+            window.pyodide = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/npm/pyodide@0.26.1/",
+                stdout: (output) => {
+                    this.appendTerminalOutput(output + '\n', 'stdout');
+                },
+                stderr: (output) => {
+                    this.appendTerminalOutput(output + '\n', 'stderr');
+                }
+            });
+ 
+            if (spinner) spinner.style.display = 'none';
+            if (text) text.textContent = 'Python 3 listo';
+            if (statusBlock) {
+                statusBlock.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusBlock.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                statusBlock.style.color = '#34d399';
+            }
+            this.appendTerminalOutput("Motor de Python 3.11 (WebAssembly) iniciado con éxito. Consola activa.\n", "stdout");
+            this.isPyodideLoading = false;
+        } catch (err) {
+            this.appendTerminalOutput(`Error inicializando Pyodide: ${err.message}\n`, "stderr");
+            if (spinner) spinner.style.display = 'none';
+            if (text) text.textContent = 'Error al iniciar';
+            this.isPyodideLoading = false;
+        }
+    },
+ 
+    appendTerminalOutput(text, type = 'stdout') {
+        const terminal = document.getElementById('python-terminal');
+        if (!terminal) return;
+        
+        const span = document.createElement('span');
+        if (type === 'stderr') {
+            span.style.color = '#f87171';
+            span.style.fontWeight = 'bold';
+        } else {
+            span.style.color = '#34d399';
+        }
+        
+        span.textContent = text;
+        terminal.appendChild(span);
+        terminal.scrollTop = terminal.scrollHeight;
+    },
+ 
+    async runPythonCode() {
+        const terminal = document.getElementById('python-terminal');
+        if (terminal) terminal.innerHTML = ''; // Clear console
+        
+        document.getElementById('btn-debug-code').style.display = 'none';
+        this.appendTerminalOutput("Ejecutando script...\n", "stdout");
+ 
+        // Ensure Pyodide is loaded
+        if (!window.pyodide) {
+            await this.loadPyodideEngine();
+            if (!window.pyodide) {
+                this.appendTerminalOutput("Error: No se pudo cargar el intérprete de Python.\n", "stderr");
+                return;
+            }
+        }
+ 
+        const code = window.pythonEditor ? window.pythonEditor.getValue() : '';
+        try {
+            await window.pyodide.runPythonAsync(code);
+            this.appendTerminalOutput("\n[Ejecución terminada con éxito]\n", "stdout");
+        } catch (err) {
+            this.appendTerminalOutput(`\n❌ Error de ejecución en Python:\n${err.message}\n`, "stderr");
+            document.getElementById('btn-debug-code').style.display = 'inline-block'; // Show debug button!
+        }
+    },
+ 
+    loadPythonChallenge(id) {
+        this.activeChallengeId = id;
+        const infoBox = document.getElementById('python-challenge-info');
+        const verifyBtn = document.getElementById('btn-verify-challenge');
+ 
+        if (!id || id === 'sandbox') {
+            if (infoBox) infoBox.classList.add('hidden');
+            if (verifyBtn) verifyBtn.style.display = 'none';
+            return;
+        }
+ 
+        const chal = this.pythonChallenges[id];
+        if (!chal) return;
+ 
+        document.getElementById('challenge-title').textContent = chal.title;
+        document.getElementById('challenge-desc').innerHTML = chal.desc;
+        document.getElementById('challenge-example').textContent = chal.example;
+ 
+        if (infoBox) infoBox.classList.remove('hidden');
+        if (verifyBtn) verifyBtn.style.display = 'inline-block';
+ 
+        if (window.pythonEditor) {
+            window.pythonEditor.setValue(chal.initialCode);
+        }
+    },
+ 
+    async verifyPythonChallenge() {
+        const terminal = document.getElementById('python-terminal');
+        if (terminal) terminal.innerHTML = ''; // Clear terminal
+        
+        document.getElementById('btn-debug-code').style.display = 'none';
+        
+        const chal = this.pythonChallenges[this.activeChallengeId];
+        if (!chal) {
+            this.appendTerminalOutput("Error: Ningún desafío cargado.\n", "stderr");
+            return;
+        }
+ 
+        this.appendTerminalOutput(`Verificando solución para "${chal.title}"...\n`, "stdout");
+ 
+        // Ensure Pyodide is loaded
+        if (!window.pyodide) {
+            await this.loadPyodideEngine();
+            if (!window.pyodide) {
+                this.appendTerminalOutput("Error: No se pudo cargar el intérprete de Python.\n", "stderr");
+                return;
+            }
+        }
+ 
+        const userCode = window.pythonEditor ? window.pythonEditor.getValue() : '';
+        const runCode = userCode + '\n' + chal.testScript;
+ 
+        try {
+            await window.pyodide.runPythonAsync(runCode);
+            this.appendTerminalOutput("\n✨ ¡DESAFÍO COMPLETADO CON ÉXITO! ✨\n", "stdout");
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        } catch (err) {
+            this.appendTerminalOutput(`\n❌ La solución no pasó todas las pruebas obligatorias:\n${err.message}\n`, "stderr");
+            document.getElementById('btn-debug-code').style.display = 'inline-block';
+        }
+    },
+ 
+    toggleAiCopilot(checked) {
+        if (checked) {
+            const config = HubStorage.getApiConfig();
+            if (!config.key) {
+                alert("Debes configurar tu API Key de Gemini o Claude en la pestaña 'Configuración' antes de usar la IA.");
+                document.getElementById('toggle-ai-copilot').checked = false;
+            } else {
+                this.appendTerminalOutput("Copilot IA activado. Al pausar la escritura por 800ms, se consultará a la IA.\n", "stdout");
+            }
+        } else {
+            this.appendTerminalOutput("Copilot IA desactivado. Solo IntelliSense local activo.\n", "stdout");
+        }
+    },
+ 
+    registerAICompletionProvider() {
+        if (window.monacoInlineCompletionsRegistered) return;
+        window.monacoInlineCompletionsRegistered = true;
+ 
+        monaco.languages.registerInlineCompletionsProvider('python', {
+            provideInlineCompletions: async function (model, position, context, token) {
+                const aiEnabled = document.getElementById('toggle-ai-copilot')?.checked;
+                if (!aiEnabled) return { items: [] };
+ 
+                // Debounce: Wait 800ms
+                const myPromise = new Promise((resolve) => setTimeout(resolve, 800));
+                await myPromise;
+                if (token.isCancellationRequested) return { items: [] };
+ 
+                // Get code context before and after
+                const textBefore = model.getValueInRange({
+                    startLineNumber: Math.max(1, position.lineNumber - 15),
+                    startColumn: 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column
+                });
+ 
+                try {
+                    const suggestion = await hubApp.getAICodeSuggestion(textBefore);
+                    if (!suggestion || token.isCancellationRequested) return { items: [] };
+ 
+                    return {
+                        items: [
+                            {
+                                insertText: suggestion,
+                                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column)
+                            }
+                        ]
+                    };
+                } catch (e) {
+                    console.warn("Error getting AI suggestion:", e);
+                    return { items: [] };
+                }
+            },
+            freeInlineCompletions: () => {}
+        });
+    },
+ 
+    async getAICodeSuggestion(textBefore) {
+        const config = HubStorage.getApiConfig();
+        if (!config.key) return '';
+ 
+        const prompt = `Eres un autocompletador de código de Python de baja latencia para un editor web. Tu tarea es completar el código que el usuario está escribiendo.
+Instrucciones críticas:
+1. Retorna ÚNICAMENTE el código faltante (una o dos líneas) a partir del cursor.
+2. NO incluyas formato Markdown (sin bloques de código con triple comilla \`\`\`).
+3. NO incluyas explicaciones ni comentarios.
+4. Si no hay continuación lógica clara, devuelve vacío.
+
+Código escrito hasta ahora:
+${textBefore}`;
+ 
+        let raw;
+        if (config.provider === 'claude') {
+            raw = await this.callClaudeAPI(prompt, config.key);
+        } else {
+            raw = await this.callGeminiAPI(prompt, config.key);
+        }
+ 
+        return this.cleanPythonResponse(raw);
+    },
+ 
+    cleanPythonResponse(text) {
+        text = text.trim();
+        const match = text.match(/```(?:python|py|javascript|js|json)?\s*([\s\S]*?)```/i);
+        if (match) return match[1].trim();
+        return text;
+    },
+ 
+    async explainPythonCode() {
+        const config = HubStorage.getApiConfig();
+        if (!config.key) {
+            alert("Por favor, configura tu API Key en Configuración.");
+            return;
+        }
+ 
+        const code = window.pythonEditor ? window.pythonEditor.getValue() : '';
+        if (!code.trim()) {
+            alert("Escribe algo de código en el editor primero.");
+            return;
+        }
+ 
+        this.showLoading("Analizando tu código...");
+        const prompt = `Explica en español de forma educativa, clara y concisa el siguiente código de Python para un estudiante universitario de programación. Estructúralo con puntos clave:\n\n\`\`\`python\n${code}\n\`\`\``;
+ 
+        try {
+            let resText;
+            if (config.provider === 'claude') {
+                resText = await this.callClaudeAPI(prompt, config.key);
+            } else {
+                resText = await this.callGeminiAPI(prompt, config.key);
+            }
+            this.hideLoading();
+            this.showExplanationModal("Explicación de Código (IA)", resText);
+        } catch (err) {
+            this.hideLoading();
+            alert(`Error: ${err.message}`);
+        }
+    },
+ 
+    async debugPythonCode() {
+        const config = HubStorage.getApiConfig();
+        if (!config.key) {
+            alert("Por favor, configura tu API Key en Configuración.");
+            return;
+        }
+ 
+        const code = window.pythonEditor ? window.pythonEditor.getValue() : '';
+        const terminal = document.getElementById('python-terminal');
+        const errorText = terminal ? terminal.innerText : '';
+ 
+        if (!code.trim() || !errorText.trim()) {
+            alert("No hay error de terminal para depurar.");
+            return;
+        }
+ 
+        this.showLoading("Depurando código...");
+        const prompt = `El siguiente código de Python falló en el navegador del estudiante.
+Depura el error y explica en español:
+1. Qué causó el error (en términos amigables).
+2. Dónde se encuentra el problema (indicando líneas de código).
+3. Cómo arreglarlo paso a paso.
+4. Proporciona el bloque de código corregido.
+
+CÓDIGO:
+\`\`\`python
+${code}
+\`\`\`
+
+DETALLE DEL ERROR:
+${errorText}`;
+ 
+        try {
+            let resText;
+            if (config.provider === 'claude') {
+                resText = await this.callClaudeAPI(prompt, config.key);
+            } else {
+                resText = await this.callGeminiAPI(prompt, config.key);
+            }
+            this.hideLoading();
+            this.showExplanationModal("Depurador de IA", resText);
+        } catch (err) {
+            this.hideLoading();
+            alert(`Error: ${err.message}`);
+        }
+    },
+ 
+    showExplanationModal(title, contentMarkdown) {
+        const existing = document.getElementById('python-explain-modal');
+        if (existing) existing.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'python-explain-modal';
+        modal.className = 'modal';
+        
+        let htmlContent = contentMarkdown
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/^### (.*$)/gim, '<h4 style="color:var(--primary);margin:1rem 0 0.5rem 0;font-weight:700;">$1</h4>')
+            .replace(/^## (.*$)/gim, '<h3 style="color:var(--primary);margin:1.2rem 0 0.6rem 0;font-weight:700;">$1</h3>')
+            .replace(/^# (.*$)/gim, '<h2 style="color:var(--primary);margin:1.5rem 0 0.8rem 0;font-weight:800;">$1</h2>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;color:#fca5a5;">$1</code>')
+            .replace(/```python([\s\S]*?)```/gim, '<pre style="background:#080c14;padding:1rem;border-radius:8px;font-family:monospace;overflow-x:auto;margin:0.8rem 0;border:1px solid rgba(255,255,255,0.05);color:#a7f3d0;white-space:pre;">$1</pre>')
+            .replace(/```([\s\S]*?)```/gim, '<pre style="background:#080c14;padding:1rem;border-radius:8px;font-family:monospace;overflow-x:auto;margin:0.8rem 0;border:1px solid rgba(255,255,255,0.05);color:var(--text-primary);white-space:pre;">$1</pre>')
+            .replace(/^\s*[-*+]\s+(.*$)/gim, '<li style="margin-left:1.5rem;margin-bottom:0.4rem;color:var(--text-primary);">$1</li>')
+            .replace(/\n/g, '<br>');
+ 
+        modal.innerHTML = `
+            <div class="modal-content glass-panel" style="max-width: 650px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
+                <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-brain" style="color:var(--primary);"></i> ${title}</h3>
+                    <button class="close-modal" onclick="document.getElementById('python-explain-modal').remove()" style="background:transparent; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="font-size:0.95rem; line-height:1.6; color:var(--text-primary);">
+                    ${htmlContent}
+                </div>
+                <div class="modal-footer" style="margin-top:2rem; display:flex; justify-content:flex-end;">
+                    <button class="btn primary" onclick="document.getElementById('python-explain-modal').remove()">Entendido</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
 };
 
