@@ -32,30 +32,50 @@ const hubApp = {
     },
 
     async checkInitialData() {
+        let loaded = false;
+        
+        // Load and sync default AWS course pack on load to ensure updates are captured
+        if (typeof DEFAULT_COURSE_PACK !== 'undefined') {
+            console.log("Syncing default AWS course pack...");
+            EngineStorage.savePack(DEFAULT_COURSE_PACK);
+            loaded = true;
+        }
+        
+        // Load and sync default Mathematics course pack on load to ensure updates are captured
+        if (typeof MATEMATICAS_COURSE_PACK !== 'undefined') {
+            console.log("Syncing default Mathematics course pack...");
+            EngineStorage.savePack(MATEMATICAS_COURSE_PACK);
+            loaded = true;
+        }
+
+        // Fallback to fetch if storage is completely empty
         const packs = EngineStorage.getAllPacks();
         if (packs.length === 0) {
-            console.log("Checking for initial data...");
-            
-            // Try global variable first (from course_data.js)
-            if (typeof DEFAULT_COURSE_PACK !== 'undefined') {
-                console.log("Loading from global DEFAULT_COURSE_PACK...");
-                if (EngineStorage.savePack(DEFAULT_COURSE_PACK)) {
-                    return true;
-                }
-            }
-
-            // Fallback to fetch
             try {
                 const response = await fetch('course_data.json');
                 const defaultPack = await response.json();
                 if (EngineStorage.savePack(defaultPack)) {
-                    return true;
+                    loaded = true;
                 }
             } catch (e) {
-                console.warn("Could not load default data", e);
+                console.warn("Could not load default data via fetch", e);
             }
         }
-        return false;
+        return loaded;
+    },
+
+    renderMath(element) {
+        if (typeof renderMathInElement === 'function' && element) {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\[', display: true}
+                ],
+                throwOnError: false
+            });
+        }
     },
 
     setupAchievements() {
@@ -538,6 +558,17 @@ const hubApp = {
                 view.classList.remove('active');
             }
         });
+        
+        // Handle math course chalkboard mode styling
+        const isMathCourse = this.currentCourse && this.currentCourse.id === 'matematica-unidad-1';
+        const isStudyOrTest = (viewId === 'view-study-module' || viewId === 'view-test');
+        console.log("switchView: viewId =", viewId, "isMathCourse =", isMathCourse, "isStudyOrTest =", isStudyOrTest);
+        if (isMathCourse && isStudyOrTest) {
+            document.body.classList.add('chalkboard-mode');
+        } else {
+            document.body.classList.remove('chalkboard-mode');
+        }
+
         if (viewId === 'view-analiticas') this.loadAnalytics();
         if (viewId === 'view-configuracion') this.loadApiConfigForm();
         if (viewId === 'view-python-lab') this.initPythonLab();
@@ -1025,6 +1056,7 @@ const hubApp = {
             }
             
             document.getElementById('study-theory-text').innerHTML = theoryHtml;
+            this.renderMath(document.getElementById('study-theory-text'));
             
             const btnStart = document.getElementById('btn-start-test-from-study');
             btnStart.onclick = () => this.startTest(moduleId);
@@ -1065,7 +1097,7 @@ const hubApp = {
         const q = this.currentTestQuestions[this.currentQuestionIndex];
         document.getElementById('test-current').textContent = this.currentQuestionIndex + 1;
         document.getElementById('test-q-topic').textContent = q.domain || q.topic || 'General';
-        document.getElementById('test-q-text').textContent = q.question;
+        document.getElementById('test-q-text').innerHTML = q.question;
 
         const optionsHtml = q.options.map((opt, index) => {
             const text = typeof opt === 'string' ? opt : opt.text;
@@ -1078,6 +1110,10 @@ const hubApp = {
         }).join('');
         
         document.getElementById('test-q-options').innerHTML = optionsHtml;
+        
+        // Render math equations using KaTeX
+        this.renderMath(document.getElementById('test-q-text'));
+        this.renderMath(document.getElementById('test-q-options'));
         
         const feedbackBox = document.getElementById('test-q-feedback');
         feedbackBox.className = 'feedback-box hidden';
@@ -1156,6 +1192,7 @@ const hubApp = {
                 feedbackBox.className = 'feedback-box error';
                 feedbackBox.innerHTML = `<div class="feedback-icon"><i class="fa-solid fa-xmark-circle"></i></div><div class="feedback-text"><strong>Incorrecto.</strong>${explanationHtml}</div>`;
             }
+            this.renderMath(feedbackBox);
         }
         
         document.getElementById('btn-test-next').classList.remove('hidden');
