@@ -661,15 +661,23 @@
     <script src="core/storage.js"></script>
     <script src="hub.js"></script>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Bypass for local development/testing -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }).catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                let unregistered = false;
+                for (let registration of registrations) {
+                    registration.unregister();
+                    unregistered = true;
+                }
+                if (unregistered) {
+                    console.log('ServiceWorker cleared for development.');
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
             });
         }
     </script>
