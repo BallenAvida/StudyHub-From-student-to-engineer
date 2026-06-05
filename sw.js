@@ -2,7 +2,9 @@ const CACHE_NAME = 'studyhub-cache-v1';
 const urlsToCache = [
     './',
     './index.html',
+    './styles.css',
     './hub.css',
+    './course_data.js',
     './hub.js',
     './core/storage.js',
     './icon-512.png',
@@ -35,7 +37,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Fetch event - cache-first strategy for local assets
+// Fetch event - cache-first strategy for local and trusted CDN assets
 self.addEventListener('fetch', event => {
     // Only intercept GET requests
     if (event.request.method !== 'GET') return;
@@ -51,8 +53,14 @@ self.addEventListener('fetch', event => {
                 // Otherwise fetch from network
                 return fetch(event.request).then(
                     response => {
-                        // Check if we received a valid response
-                        if(!response || response.status !== 200 || response.type !== 'basic') {
+                        const url = event.request.url;
+                        const isTrustedCdn = url.includes('cdn.jsdelivr.net') || 
+                                            url.includes('cdnjs.cloudflare.com') ||
+                                            url.includes('fonts.googleapis.com') ||
+                                            url.includes('fonts.gstatic.com');
+                        
+                        // Check if we received a valid response (basic for local, cors for CDNs)
+                        if(!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
                             return response;
                         }
                         
@@ -61,8 +69,8 @@ self.addEventListener('fetch', event => {
                         
                         caches.open(CACHE_NAME)
                             .then(cache => {
-                                // Cache local assets
-                                if (event.request.url.startsWith(self.location.origin)) {
+                                // Cache local assets or trusted CDNs
+                                if (url.startsWith(self.location.origin) || isTrustedCdn) {
                                     cache.put(event.request, responseToCache);
                                 }
                             });
@@ -71,7 +79,6 @@ self.addEventListener('fetch', event => {
                     }
                 ).catch(() => {
                     // Fallback for when network fails and asset is not in cache
-                    // Useful if we had an offline.html page, but we don't need it right now
                     console.log('Fetch failed and no cache available for: ', event.request.url);
                 });
             })

@@ -1765,7 +1765,7 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
         });
  
         const msg = new SpeechSynthesisUtterance(textToRead);
-        msg.lang = 'en-US'; // Use English for AWS CLF-C02
+        msg.lang = this.currentCourse.lang || (this.currentCourse.id.includes('english') ? 'en-US' : 'es-ES');
         msg.rate = 1.0;
         window.speechSynthesis.speak(msg);
     },
@@ -2309,8 +2309,15 @@ ${errorText}`;
             .replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;color:#fca5a5;">$1</code>')
             .replace(/```python([\s\S]*?)```/gim, '<pre style="background:#080c14;padding:1rem;border-radius:8px;font-family:monospace;overflow-x:auto;margin:0.8rem 0;border:1px solid rgba(255,255,255,0.05);color:#a7f3d0;white-space:pre;">$1</pre>')
             .replace(/```([\s\S]*?)```/gim, '<pre style="background:#080c14;padding:1rem;border-radius:8px;font-family:monospace;overflow-x:auto;margin:0.8rem 0;border:1px solid rgba(255,255,255,0.05);color:var(--text-primary);white-space:pre;">$1</pre>')
-            .replace(/^\s*[-*+]\s+(.*$)/gim, '<li style="margin-left:1.5rem;margin-bottom:0.4rem;color:var(--text-primary);">$1</li>')
-            .replace(/\n/g, '<br>');
+            .replace(/^\s*[-*+]\s+(.*$)/gim, '<li style="margin-left:1.5rem;margin-bottom:0.4rem;color:var(--text-primary);">$1</li>');
+
+        const parts = htmlContent.split(/(<pre[\s\S]*?<\/pre>)/gim);
+        for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 0) {
+                parts[i] = parts[i].replace(/\n/g, '<br>');
+            }
+        }
+        htmlContent = parts.join('');
  
         modal.innerHTML = `
             <div class="modal-content glass-panel" style="max-width: 650px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
