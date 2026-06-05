@@ -63,6 +63,22 @@
                     <i class="fa-brands fa-python" style="color: #ffe873;"></i>
                     <span>Python Lab</span>
                 </a>
+                <a href="#" class="nav-item" data-target="view-quiz-solver">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <span>Resolver Formulario</span>
+                </a>
+                <a href="#" class="nav-item" id="pomodoro-nav-toggle" onclick="PomodoroTimer.toggleWidget(event)">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span>Pomodoro</span>
+                </a>
+                <a href="#" class="nav-item" data-target="view-srs">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Repaso SRS <span id="srs-nav-badge" class="srs-nav-badge hidden">0</span></span>
+                </a>
+                <a href="#" class="nav-item" data-target="view-notas">
+                    <i class="fa-solid fa-pen-nib"></i>
+                    <span>Mis Notas</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -92,6 +108,9 @@
                     <div id="search-dropdown" class="search-dropdown hidden"></div>
                 </div>
                 <div class="topbar-actions">
+                    <button class="icon-btn" id="btn-open-solver" onclick="hubApp.toggleMathSolver()" title="Calculadora y Resolutor Matemático" style="margin-right: 8px; color: #60a5fa;">
+                        <i class="fa-solid fa-calculator"></i>
+                    </button>
                     <div id="streak-badge" class="streak-badge hidden">
                         <i class="fa-solid fa-fire"></i>
                         <span id="streak-badge-num">0</span>
@@ -183,11 +202,70 @@
                         </button>
                     </div>
 
-                    <!-- Exam Readiness Score — shown when domain history exists -->
-                    <div id="readiness-score-container" style="margin-bottom: 1.5rem;"></div>
+                    <!-- Pestañas del Curso -->
+                    <div class="course-tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--glass-border); margin-bottom: 1.5rem; padding-bottom: 0.5rem;">
+                        <button class="tab-btn active" id="tab-modules" onclick="hubApp.switchCourseTab('modules')" style="background: none; border: none; color: var(--text-primary); font-size: 1.1rem; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer; border-bottom: 3px solid var(--primary); transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-graduation-cap"></i> Módulos de Estudio
+                        </button>
+                        <button class="tab-btn" id="tab-notes" onclick="hubApp.switchCourseTab('notes')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-book-open"></i> Bloc de Notas
+                        </button>
+                    </div>
 
-                    <div class="cards-container" id="course-modules-container">
-                        <!-- Injected by hub.js based on JSON modules -->
+                    <!-- Contenido Pestaña Módulos -->
+                    <div id="course-modules-tab-content">
+                        <!-- Exam Readiness Score — shown when domain history exists -->
+                        <div id="readiness-score-container" style="margin-bottom: 1.5rem;"></div>
+
+                        <div class="cards-container" id="course-modules-container">
+                            <!-- Injected by hub.js based on JSON modules -->
+                        </div>
+                    </div>
+
+                    <!-- Contenido Pestaña Bloc de Notas -->
+                    <div id="course-notes-tab-content" class="hidden">
+                        <div class="notes-workspace" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; height: 600px; min-height: 500px; margin-bottom: 2rem;">
+                            <!-- Editor Pane -->
+                            <div class="glass-panel" style="padding: 0; display: flex; flex-direction: column; border: 1px solid var(--glass-border); overflow: hidden; margin-bottom: 0;">
+                                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-edit"></i> editor_de_apuntes.md</span>
+                                    <div class="editor-actions" style="display: flex; gap: 8px;">
+                                        <button class="btn secondary" id="btn-notes-copilot" onclick="hubApp.runNotesCopilot()" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; margin: 0; background: rgba(244, 63, 94, 0.15); border-color: rgba(244, 63, 94, 0.3); color: #fb7185;">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i> Copilot IA
+                                        </button>
+                                        <button class="btn-icon" onclick="hubApp.clearCourseNotes()" style="width: 28px; height: 28px; font-size: 0.8rem; border-radius: 6px;" title="Limpiar Notas">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="toolbar" style="display: flex; gap: 5px; padding: 6px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--glass-border); flex-wrap: wrap;">
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('**', '**')" title="Negrita" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">B</button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('*', '*')" title="Cursiva" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-style: italic; font-size: 0.9rem;">I</button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('# ', '')" title="Título 1" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">H1</button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('## ', '')" title="Título 2" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">H2</button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('- ', '')" title="Lista" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fa-solid fa-list"></i></button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('`', '`')" title="Código en línea" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.9rem;">&lt;/&gt;</button>
+                                    <span style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 4px;"></span>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('$', '$')" title="Fórmula Matemática" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold;">$</button>
+                                    <button class="tool-btn" onclick="hubApp.insertNotesMarkdown('$$\\n', '\\n$$')" title="Bloque Matemático" style="background: none; border: none; color: var(--text-primary); cursor: pointer; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold;">$$</button>
+                                </div>
+                                <textarea id="course-notes-editor" oninput="hubApp.handleNotesInput()" placeholder="Escribe tus apuntes aquí usando Markdown y KaTeX (ej. $e^{i\\pi} + 1 = 0$)... Las notas se guardan automáticamente." style="flex-grow: 1; border: none; background: transparent; padding: 1rem; color: var(--text-primary); font-family: inherit; font-size: 1rem; resize: none; outline: none; line-height: 1.6;"></textarea>
+                                <div style="background: rgba(0,0,0,0.3); padding: 4px 12px; font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border);">
+                                    <span id="notes-word-count">0 palabras</span>
+                                    <span id="notes-status" style="color: #10b981;"><i class="fa-solid fa-check-double"></i> Guardado en este navegador</span>
+                                </div>
+                            </div>
+
+                            <!-- Preview Pane -->
+                            <div class="glass-panel" style="padding: 0; display: flex; flex-direction: column; border: 1px solid var(--glass-border); overflow: hidden; margin-bottom: 0;">
+                                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-bottom: 1px solid var(--glass-border);">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-eye"></i> vista_previa.html</span>
+                                </div>
+                                <div id="course-notes-preview" class="study-content" style="flex-grow: 1; padding: 1.5rem; overflow-y: auto; line-height: 1.6; color: var(--text-primary);">
+                                    <p style="color: var(--text-secondary); font-style: italic;">Comienza a escribir a la izquierda para ver la previsualización formateada aquí...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -207,8 +285,14 @@
 
                     <div class="glass-panel" style="display: flex; flex-direction: column; height: 550px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glass-border); position: relative;">
                         <!-- Warning if no API Key -->
-                        <div id="chat-api-warning" class="hidden" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Para usar el chat, debes configurar tu API Key en la pestaña <a href="#" onclick="hubApp.switchToConfigTab(event)" style="color: #60a5fa; text-decoration: underline;">Configuración</a>.
+                        <div id="chat-api-warning" class="hidden" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; display: flex; flex-direction: column; gap: 8px;">
+                            <div>
+                                <i class="fa-solid fa-triangle-exclamation"></i> Para usar el chat con IA real, debes configurar tu API Key en la pestaña <a href="#" onclick="hubApp.switchToConfigTab(event)" style="color: #60a5fa; text-decoration: underline;">Configuración</a>.
+                            </div>
+                            <div style="border-top: 1px solid rgba(239, 68, 68, 0.2); padding-top: 6px; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; color: #a7f3d0;">
+                                <input type="checkbox" id="chat-demo-mode" onchange="hubApp.toggleChatDemoMode()" style="cursor: pointer;">
+                                <label for="chat-demo-mode" style="cursor: pointer; font-weight: bold; color: #34d399; margin: 0; display: inline-block;">Activar Modo Demostración (Simulador Offline sin API Key)</label>
+                            </div>
                         </div>
 
                         <!-- Chat Messages Container -->
@@ -364,6 +448,25 @@
                         </div>
                     </div>
 
+                    <!-- Study Heatmap -->
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem;">
+                            <h3><i class="fa-solid fa-fire" style="color:#f97316;margin-right:8px;"></i>Racha de Estudio</h3>
+                            <span id="heatmap-streak-badge" style="font-size:0.9rem; font-weight:700; background:rgba(249,115,22,0.15); color:#fb923c; padding:4px 12px; border-radius:20px;">0 días seguidos 🔥</span>
+                        </div>
+                        <p style="color:var(--text-secondary);font-size:0.82rem;margin-bottom:1rem;">Cada cuadro = 1 día. Verde = estudiaste. Cuanto más oscuro, más sesiones Pomodoro.</p>
+                        <div id="study-heatmap" class="study-heatmap-grid"></div>
+                        <div class="heatmap-legend">
+                            <span style="color:var(--text-secondary);font-size:0.78rem;">Menos</span>
+                            <span class="heatmap-cell" style="background:rgba(255,255,255,0.05);"></span>
+                            <span class="heatmap-cell" style="background:#166534;"></span>
+                            <span class="heatmap-cell" style="background:#15803d;"></span>
+                            <span class="heatmap-cell" style="background:#16a34a;"></span>
+                            <span class="heatmap-cell" style="background:#22c55e;"></span>
+                            <span style="color:var(--text-secondary);font-size:0.78rem;">Más</span>
+                        </div>
+                    </div>
+
                     <!-- Achievements / Trofeos -->
                     <div class="glass-panel" style="margin-top: 1.5rem;">
                         <h3 style="margin-bottom: 1.5rem">
@@ -423,6 +526,20 @@
                         <h2><i class="fa-solid fa-gear" style="color: #94a3b8; margin-right: 10px;"></i> Configuración</h2>
                     </div>
                     <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Ajustes del sistema y datos</p>
+
+                    <!-- ===== THEME PALETTE SELECTOR ===== -->
+                    <div class="glass-panel theme-selector-panel" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 0.5rem;">
+                            <i class="fa-solid fa-palette" style="color: #a78bfa; margin-right: 8px;"></i>Paleta de Colores
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.75rem;">
+                            Elige el tema visual de tu Hub. El cambio se aplica al instante y se guarda automáticamente.
+                        </p>
+                        <div class="theme-palettes-grid" id="theme-palettes-grid">
+                            <!-- Cards generadas dinámicamente por hub.js -->
+                        </div>
+                    </div>
+                    <!-- ===== /THEME PALETTE SELECTOR ===== -->
 
                     <div class="glass-panel" style="margin-bottom: 2rem;">
                         <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-database" style="color: #10b981;"></i> Gestión de Datos (Local)</h3>
@@ -503,6 +620,264 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- VIEW QUIZ SOLVER (SPA) -->
+                <div id="view-quiz-solver" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-file-invoice" style="color: #10b981; margin-right: 10px;"></i> Solucionador de Formularios</h2>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; margin-top: -1rem;">Pega preguntas, enunciados o el código HTML de Google Forms para resolverlos paso a paso con el resolvedor del Hub.</p>
+
+                    <div class="split-view" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <!-- Left Panel: Input & Paste Area -->
+                        <div style="flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px;">
+                            <div class="glass-panel" style="display: flex; flex-direction: column; gap: 12px; padding: 20px;">
+                                <h3 style="margin: 0; font-size: 1.1rem; color: #a7f3d0;"><i class="fa-solid fa-paste" style="color: #34d399;"></i> Ingresar Cuestionario</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">Pega el texto de tus ejercicios con sus alternativas, o copia directamente el código fuente HTML de tu Google Form.</p>
+                                
+                                <textarea id="quiz-paste-area" placeholder="Ejemplo:
+Pregunta 1: Resolver la ecuación x^2 - 5x + 6 = 0
+A) x = 1, x = 2
+B) x = 2, x = 3
+C) x = 0, x = 5" style="width: 100%; height: 180px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; color: var(--text-primary); font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(52,211,153,0.45)'" onblur="this.style.borderColor='var(--glass-border)'"></textarea>
+                                
+                                <button class="btn primary" onclick="hubApp.parseQuizForm()" style="background: var(--primary); padding: 10px; font-weight: bold; border-radius: 8px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> ANALIZAR E IMPORTAR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Questions List -->
+                        <div style="flex: 1.5; min-width: 320px; display: flex; flex-direction: column; gap: 15px;">
+                            <div class="glass-panel" style="padding: 20px; min-height: 300px; display: flex; flex-direction: column;">
+                                <h3 style="margin: 0 0 15px 0; font-size: 1.1rem; color: #a7f3d0;"><i class="fa-solid fa-list-check" style="color: #60a5fa;"></i> Preguntas Detectadas (<span id="quiz-q-count">0</span>)</h3>
+                                
+                                <!-- Empty state -->
+                                <div id="quiz-empty-state" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-secondary); padding: 2rem 0; gap: 10px;">
+                                    <i class="fa-solid fa-file-circle-question" style="font-size: 3rem; color: rgba(255,255,255,0.15);"></i>
+                                    <span>No hay preguntas importadas todavía. Pega un cuestionario a la izquierda para comenzar.</span>
+                                </div>
+
+                                <!-- Questions Container -->
+                                <div id="quiz-questions-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== NOTES EDITOR VIEW ===== -->
+                <div id="view-notas" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-pen-nib" style="color:#f59e0b;margin-right:10px;"></i>Mis Notas</h2>
+                    </div>
+                    <p style="color:var(--text-secondary);margin-bottom:1.5rem;margin-top:-1rem;">
+                        Editor con soporte Markdown y fórmulas matemáticas en tiempo real. Se guarda automáticamente.
+                    </p>
+
+                    <!-- Top bar: course selector + actions -->
+                    <div class="notes-top-bar glass-panel" style="margin-bottom:1rem;">
+                        <div class="notes-selector-wrap">
+                            <i class="fa-solid fa-folder-open" style="color:var(--primary);"></i>
+                            <select id="notes-course-select" class="form-control notes-select" onchange="NotesEditor.loadNote(this.value)">
+                                <option value="__general__">📓 Notas Generales</option>
+                            </select>
+                        </div>
+                        <div class="notes-actions">
+                            <span id="notes-autosave-indicator" class="notes-save-badge">✓ Guardado</span>
+                            <button class="btn secondary notes-action-btn" onclick="NotesEditor.exportMd()" title="Exportar como .md">
+                                <i class="fa-solid fa-file-arrow-down"></i> Exportar .md
+                            </button>
+                            <button class="btn secondary notes-action-btn" onclick="NotesEditor.clearNote()" title="Borrar nota">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Formatting toolbar -->
+                    <div class="notes-toolbar glass-panel" style="margin-bottom:0.5rem;padding:0.5rem 0.75rem;">
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('bold')"      title="Negrita (Ctrl+B)"><b>B</b></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('italic')"    title="Cursiva (Ctrl+I)"><i>I</i></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('strike')"    title="Tachado"><s>S</s></button>
+                        </div>
+                        <div class="notes-tb-divider"></div>
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('h1')"  title="Encabezado 1">H1</button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('h2')"  title="Encabezado 2">H2</button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('h3')"  title="Encabezado 3">H3</button>
+                        </div>
+                        <div class="notes-tb-divider"></div>
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('ul')"    title="Lista"><i class="fa-solid fa-list-ul"></i></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('ol')"    title="Lista numerada"><i class="fa-solid fa-list-ol"></i></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('quote')" title="Cita"><i class="fa-solid fa-quote-left"></i></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('hr')"    title="Separador">—</button>
+                        </div>
+                        <div class="notes-tb-divider"></div>
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('code')"     title="Código inline"><i class="fa-solid fa-code"></i></button>
+                            <button class="notes-tb-btn" onclick="NotesEditor.insert('codeblock')" title="Bloque de código"><i class="fa-solid fa-terminal"></i></button>
+                        </div>
+                        <div class="notes-tb-divider"></div>
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn math-btn" onclick="NotesEditor.insert('math')"      title="Fórmula inline ($)">∑</button>
+                            <button class="notes-tb-btn math-btn" onclick="NotesEditor.insert('mathblock')" title="Fórmula en bloque ($$)">∫</button>
+                        </div>
+                        <div class="notes-tb-divider"></div>
+                        <div class="notes-toolbar-group">
+                            <button class="notes-tb-btn" onclick="NotesEditor.toggleLayout()" title="Cambiar vista" id="notes-layout-btn">
+                                <i class="fa-solid fa-table-columns"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Split pane: editor | preview -->
+                    <div class="notes-split-pane" id="notes-split-pane">
+                        <!-- Editor -->
+                        <div class="notes-editor-pane" id="notes-editor-pane">
+                            <div class="notes-pane-header">
+                                <i class="fa-solid fa-pencil" style="color:var(--primary);"></i> Editor
+                                <span id="notes-char-count" style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary);">0 caracteres</span>
+                            </div>
+                            <textarea id="notes-textarea"
+                                class="notes-textarea"
+                                placeholder="# Mi nota&#10;&#10;Escribe aquí con **Markdown** y fórmulas $E = mc^2$&#10;&#10;- Elemento 1&#10;- Elemento 2&#10;&#10;$$\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}$$"
+                                oninput="NotesEditor.onInput()"
+                                onkeydown="NotesEditor.onKeydown(event)"></textarea>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="notes-preview-pane" id="notes-preview-pane">
+                            <div class="notes-pane-header">
+                                <i class="fa-solid fa-eye" style="color:#10b981;"></i> Vista Previa
+                            </div>
+                            <div id="notes-preview" class="notes-preview-content">
+                                <div class="notes-preview-empty">
+                                    <i class="fa-solid fa-feather" style="font-size:2.5rem;opacity:0.15;display:block;margin-bottom:0.75rem;"></i>
+                                    Empieza a escribir para ver la vista previa aquí...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== /NOTES EDITOR VIEW ===== -->
+
+                <!-- ===== SRS VIEW ===== -->
+                <div id="view-srs" class="dashboard-view hidden">
+                    <div class="view-header">
+                        <h2><i class="fa-solid fa-brain" style="color:#a78bfa;margin-right:10px;"></i>Repaso Espaciado (SRS)</h2>
+                    </div>
+                    <p style="color:var(--text-secondary);margin-bottom:2rem;margin-top:-1rem;">
+                        Algoritmo SM-2: las tarjetas que fallas vuelven pronto. Las que dominas, en días. Así se memoriza para siempre.
+                    </p>
+
+                    <!-- Deck selector + stats row -->
+                    <div class="srs-top-bar glass-panel" style="margin-bottom:1.5rem;">
+                        <div class="srs-deck-selector">
+                            <label style="color:var(--text-secondary);font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Mazo</label>
+                            <select id="srs-deck-select" class="form-control" style="margin-top:4px;" onchange="SRSEngine.loadDeck(this.value)">
+                                <option value="">— Elige un curso —</option>
+                            </select>
+                        </div>
+                        <div class="srs-stats-row">
+                            <div class="srs-stat-pill new">
+                                <i class="fa-solid fa-star"></i>
+                                <span id="srs-stat-new">0</span>
+                                <small>Nuevas</small>
+                            </div>
+                            <div class="srs-stat-pill due">
+                                <i class="fa-solid fa-clock"></i>
+                                <span id="srs-stat-due">0</span>
+                                <small>Pendientes</small>
+                            </div>
+                            <div class="srs-stat-pill done">
+                                <i class="fa-solid fa-check"></i>
+                                <span id="srs-stat-done">0</span>
+                                <small>Hoy</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Session area -->
+                    <div id="srs-session-area">
+
+                        <!-- Empty / no deck state -->
+                        <div id="srs-empty-state" class="glass-panel" style="text-align:center;padding:4rem 2rem;">
+                            <i class="fa-solid fa-layer-group" style="font-size:3.5rem;color:var(--text-secondary);opacity:0.3;margin-bottom:1.2rem;display:block;"></i>
+                            <h3 style="margin-bottom:.5rem;">Elige un mazo para empezar</h3>
+                            <p style="color:var(--text-secondary);">Selecciona un curso arriba. El sistema cargará las tarjetas pendientes de hoy.</p>
+                        </div>
+
+                        <!-- All done state -->
+                        <div id="srs-done-state" class="glass-panel hidden" style="text-align:center;padding:4rem 2rem;">
+                            <div style="font-size:4rem;margin-bottom:1rem;">🎉</div>
+                            <h3 style="margin-bottom:.5rem;">¡Sesión completada!</h3>
+                            <p style="color:var(--text-secondary);margin-bottom:1.5rem;">No quedan tarjetas pendientes por hoy. Vuelve mañana para seguir.</p>
+                            <button class="btn primary" onclick="SRSEngine.loadDeck(document.getElementById('srs-deck-select').value)">
+                                <i class="fa-solid fa-rotate"></i> Repasar de nuevo
+                            </button>
+                        </div>
+
+                        <!-- Active card area -->
+                        <div id="srs-card-area" class="hidden">
+                            <!-- Progress bar -->
+                            <div class="srs-progress-wrap">
+                                <div class="srs-progress-bar-track">
+                                    <div class="srs-progress-bar-fill" id="srs-progress-fill"></div>
+                                </div>
+                                <span id="srs-progress-label" style="font-size:0.82rem;color:var(--text-secondary);">0 / 0</span>
+                            </div>
+
+                            <!-- Flip card -->
+                            <div class="srs-flip-scene" id="srs-flip-scene" onclick="SRSEngine.flip()">
+                                <div class="srs-flip-card" id="srs-flip-card">
+                                    <!-- FRONT -->
+                                    <div class="srs-card-face srs-card-front">
+                                        <div class="srs-card-tag" id="srs-card-tag">General</div>
+                                        <div class="srs-card-question" id="srs-card-question"></div>
+                                        <div class="srs-flip-hint">
+                                            <i class="fa-solid fa-hand-pointer"></i> Clic para revelar respuesta
+                                        </div>
+                                    </div>
+                                    <!-- BACK -->
+                                    <div class="srs-card-face srs-card-back">
+                                        <div class="srs-card-tag back-tag" id="srs-card-tag-back">General</div>
+                                        <div class="srs-card-question" id="srs-card-question-back" style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:1rem;"></div>
+                                        <div class="srs-card-answer" id="srs-card-answer"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rating buttons (only visible after flip) -->
+                            <div class="srs-rating-bar hidden" id="srs-rating-bar">
+                                <p style="color:var(--text-secondary);font-size:0.82rem;text-align:center;margin-bottom:0.75rem;">¿Qué tan bien lo recordaste?</p>
+                                <div class="srs-rating-btns">
+                                    <button class="srs-rating-btn again" onclick="SRSEngine.rate(0)">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        <span>Olvidé</span>
+                                        <small>&lt;1 min</small>
+                                    </button>
+                                    <button class="srs-rating-btn hard" onclick="SRSEngine.rate(2)">
+                                        <i class="fa-solid fa-face-frown"></i>
+                                        <span>Difícil</span>
+                                        <small id="srs-hint-hard">&lt;10 min</small>
+                                    </button>
+                                    <button class="srs-rating-btn good" onclick="SRSEngine.rate(4)">
+                                        <i class="fa-solid fa-face-smile"></i>
+                                        <span>Bien</span>
+                                        <small id="srs-hint-good">~1 día</small>
+                                    </button>
+                                    <button class="srs-rating-btn easy" onclick="SRSEngine.rate(5)">
+                                        <i class="fa-solid fa-face-grin-stars"></i>
+                                        <span>Fácil</span>
+                                        <small id="srs-hint-easy">~4 días</small>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== /SRS VIEW ===== -->
 
                 <!-- PYTHON LAB VIEW (SPA) -->
                 <div id="view-python-lab" class="dashboard-view hidden">
@@ -656,6 +1031,245 @@
         </div>
     </div>
 
+    <!-- Math Solver / "Photomath Local" Panel -->
+    <div id="math-solver-panel" class="math-solver-panel hidden-panel">
+        <div class="solver-header" style="flex-direction: column; align-items: stretch; gap: 10px; padding-bottom: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h3><i class="fa-solid fa-calculator"></i> Pizarra Resolutora</h3>
+                <button class="close-btn" onclick="hubApp.toggleMathSolver()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Calculadora Internal Tabs -->
+            <div class="solver-tabs" style="display: flex; gap: 5px; border-bottom: 1px solid var(--glass-border); padding-bottom: 2px; margin-top: 5px;">
+                <button class="solver-tab-btn active" id="btn-tab-solve" onclick="hubApp.switchSolverTab('solve')" style="background:none; border:none; color:var(--text-primary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid var(--primary);">
+                    <i class="fa-solid fa-calculator"></i> Resolutor
+                </button>
+                <button class="solver-tab-btn" id="btn-tab-graph" onclick="hubApp.switchSolverTab('graph')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
+                    <i class="fa-solid fa-chart-line"></i> Gráficas 2D
+                </button>
+                <button class="solver-tab-btn" id="btn-tab-scratch" onclick="hubApp.switchSolverTab('scratch')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
+                    <i class="fa-solid fa-signature"></i> Borrador
+                </button>
+                <button class="solver-tab-btn" id="btn-tab-camera" onclick="hubApp.switchSolverTab('camera')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
+                    <i class="fa-solid fa-camera"></i> Cámara
+                </button>
+            </div>
+        </div>
+        
+        <div class="solver-content">
+            <!-- PESTAÑA 1: RESOLUTOR -->
+            <div id="solver-panel-solve" class="solver-tab-panel">
+                <p class="solver-desc" style="margin-bottom: 0.75rem;">Ingresa aritmética, fracciones (<code>1/2 + 2/3</code>), derivadas (<code>d/dx(x^3-2x)</code>) o ecuaciones para resolver paso a paso.</p>
+                
+                <!-- Pantalla de la Calculadora (Casio/Photomath Style) -->
+                <label for="solver-input" class="calculator-screen" style="background: #0c1c14; border: 4px solid #5c3a21; border-radius: 10px; padding: 12px; margin-bottom: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between; position: relative; cursor: text; box-shadow: inset 0 0 15px rgba(0,0,0,0.85), 0 4px 10px rgba(0,0,0,0.4); display: flex;">
+                    <div style="position: absolute; top: 4px; left: 8px; font-size: 0.55rem; color: rgba(255,255,255,0.3); font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; pointer-events: none;">Estudiante Casio NATURAL-V.P.A.M.</div>
+                    
+                    <!-- Math Display (KaTeX) -->
+                    <div id="solver-math-display" class="math-display" style="color: #ffffff; text-shadow: 0 0 2px rgba(255,255,255,0.4); text-align: center; font-size: 1.35rem; overflow-x: auto; overflow-y: hidden; padding: 6px 0; margin-top: 10px; min-height: 2.5rem; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                        <span style="color: rgba(255,255,255,0.25); font-style: italic; font-size: 0.85rem;">Escribe o toca para comenzar...</span>
+                    </div>
+
+                    <!-- Input Line (Inside Screen) -->
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.75rem; color: #60a5fa; font-weight: bold; font-family: monospace; user-select: none;">Editar:</span>
+                        <input type="text" id="solver-input" placeholder="Toca aquí para escribir..." autocomplete="off" onclick="event.stopPropagation()" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 6px 10px; font-size: 0.9rem; color: #a7f3d0; width: 100%; outline: none; font-family: monospace; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(96,165,250,0.45)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+                    </div>
+                </label>
+
+                <!-- Historial de Expresiones (Pills horizontales) -->
+                <div id="solver-history-block" class="hidden" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); font-weight: bold; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span><i class="fa-solid fa-clock-rotate-left"></i> Historial Reciente:</span>
+                        <button onclick="hubApp.clearSolverHistory()" style="background: none; border: none; color: #f87171; font-size: 0.65rem; cursor: pointer; padding: 0;">Borrar todo</button>
+                    </div>
+                    <div id="solver-history-list" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; -ms-overflow-style: none;">
+                        <!-- Pills inyectadas dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Selector de Métodos (mostrado si corresponde) -->
+                <div id="solver-method-wrapper" class="hidden" style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Método de Solución:</span>
+                    <select id="solver-method" onchange="hubApp.solveMathProblem()" style="background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; padding: 4px 8px; font-size: 0.8rem; outline: none; cursor: pointer;">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <!-- Virtual Math Keypad (Casio Natural Layout 36 Keys) -->
+                <div class="math-keypad" style="margin-bottom: 12px; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                    <!-- Fila 1 (Navegación y Paréntesis) -->
+                    <button class="key-btn op-key" onclick="hubApp.moveSolverCursor(-1)"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button class="key-btn op-key" onclick="hubApp.moveSolverCursor(1)"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('(')">(</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol(')')">)</button>
+                    
+                    <!-- Fila 2 (Edición y Control) -->
+                    <button class="key-btn clear-key" onclick="hubApp.clearSolver()">C</button>
+                    <button class="key-btn backspace-key" onclick="hubApp.backspaceSolver()"><i class="fa-solid fa-delete-left"></i></button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol(';')">;</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('y = ')">y=</button>
+                    
+                    <!-- Fila 3 (Cálculo y Variables) -->
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('d/dx(')">d/dx</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('int(')">int</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('x')">x</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('^2')">x²</button>
+                    
+                    <!-- Fila 4 (Exponentes y Raíces) -->
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('^')">^</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('sqrt(')">√</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('sin(')">sin</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('cos(')">cos</button>
+                    
+                    <!-- Fila 5 (Trigonométricas Adicionales y Constantes) -->
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('tan(')">tan</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('ln(')">ln</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('log(')">log</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('e')">e</button>
+                    
+                    <!-- Fila 6 (Numérica 1) -->
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('7')">7</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('8')">8</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('9')">9</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('÷')">÷</button>
+                    
+                    <!-- Fila 7 (Numérica 2) -->
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('4')">4</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('5')">5</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('6')">6</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('×')">×</button>
+                    
+                    <!-- Fila 8 (Numérica 3) -->
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('1')">1</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('2')">2</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('3')">3</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('-')">-</button>
+                    
+                    <!-- Fila 9 (Numérica 4) -->
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('0')">0</button>
+                    <button class="key-btn num-key" onclick="hubApp.insertSolverSymbol('.')">.</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('pi')">π</button>
+                    <button class="key-btn op-key" onclick="hubApp.insertSolverSymbol('+')">+</button>
+
+                <!-- Botón Principal Resolver -->
+                <button class="key-btn solve-key" onclick="hubApp.solveMathProblem()" style="width: 100%; margin-bottom: 15px; padding: 0.75rem; font-size: 1rem; font-weight: 700; border-radius: 8px;">RESOLVER PASO A PASO</button>
+
+                <!-- Solver Results Area -->
+                <div id="solver-results-container" class="glass-panel hidden" style="margin-top: 0;">
+                    <div class="result-formula-block">
+                        <span class="result-label">Problema:</span>
+                        <div id="solver-latex-problem" class="math-display"></div>
+                    </div>
+                    
+                    <div class="result-final-block">
+                        <span class="result-label">Resultado Final:</span>
+                        <div id="solver-latex-result" class="math-display-highlight"></div>
+                    </div>
+
+                    <!-- Representaciones Alternativas -->
+                    <div id="solver-alternate-reps-block" class="hidden" style="margin-top: 12px; border-top: 1px dashed var(--glass-border); padding-top: 12px; margin-bottom: 12px;">
+                        <span class="result-label" style="color: #60a5fa;"><i class="fa-solid fa-arrows-spin"></i> Formatos Alternativos:</span>
+                        <div id="solver-alternate-reps-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;"></div>
+                    </div>
+
+                    <div class="result-steps-block">
+                        <span class="result-label"><i class="fa-solid fa-list-ol"></i> Solución Paso a Paso:</span>
+                        <div id="solver-steps-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: GRÁFICAS 2D -->
+            <div id="solver-panel-graph" class="solver-tab-panel hidden">
+                <p class="solver-desc" style="margin-bottom: 0.75rem;">Grafica funciones de tipo <code>y = f(x)</code>. Ej: <code>y = x^2 - 4</code> o <code>y = sin(x)</code>.</p>
+                <div class="form-group" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input type="text" id="graph-input" placeholder="y = x^2 - 4" value="y = x^2 - 4" style="flex-grow:1; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:8px; padding:6px 12px; color:var(--text-primary); font-family:monospace; outline:none;">
+                    <button class="btn primary" onclick="hubApp.updateSolverGraph()" style="padding:6px 12px; font-size:0.85rem; margin:0; border-radius:8px;">Trazar</button>
+                </div>
+                
+                <div class="graph-container-wrapper" style="position: relative; width: 100%; height: 260px; background: #0c1c14; border: 4px solid #5c3a21; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+                    <canvas id="graph-canvas" style="display: block; cursor: grab; width: 100%; height: 100%;"></canvas>
+                    
+                    <!-- Floating graph controls -->
+                    <div style="position: absolute; bottom: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px;">
+                        <button onclick="hubApp.zoomSolverGraph(1.2)" class="key-btn" style="padding:4px; font-size:0.8rem; width:26px; height:26px; line-height:16px; margin:0;" title="Zoom In">+</button>
+                        <button onclick="hubApp.zoomSolverGraph(0.8)" class="key-btn" style="padding:4px; font-size:0.8rem; width:26px; height:26px; line-height:16px; margin:0;" title="Zoom Out">-</button>
+                        <button onclick="hubApp.resetSolverGraph()" class="key-btn" style="padding:4px; font-size:0.7rem; width:26px; height:26px; line-height:16px; margin:0;" title="Reset"><i class="fa-solid fa-arrows-to-dot"></i></button>
+                    </div>
+                </div>
+                
+                <div id="graph-points-info" style="margin-top: 10px; font-size: 0.82rem; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="font-weight:700; color:#60a5fa; margin-bottom: 4px;"><i class="fa-solid fa-circle-info"></i> Análisis de la Curva:</div>
+                    <div id="graph-analysis-text">Ingresa una función y haz clic en Trazar para ver sus raíces y puntos clave.</div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: BORRADOR DE TIZA -->
+            <div id="solver-panel-scratch" class="solver-tab-panel hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <p class="solver-desc" style="margin: 0;">Dibuja notas o cálculos rápidos usando tiza.</p>
+                    <button class="btn secondary" onclick="ChalkScratchpad.clear()" style="padding:4px 10px; font-size:0.8rem; margin:0; border-radius:6px; background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#fca5a5;"><i class="fa-solid fa-trash-can"></i> Limpiar</button>
+                </div>
+                
+                <div class="scratch-container-wrapper" style="width: 100%; height: 360px; background: #0c1c14; border: 4px solid #5c3a21; border-radius: 8px; overflow: hidden; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+                    <canvas id="scratch-canvas" style="display: block; cursor: crosshair; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 4: CÁMARA (ESCÁNER OCR) -->
+            <div id="solver-panel-camera" class="solver-tab-panel hidden">
+                <p class="solver-desc" style="margin-bottom: 0.75rem;">Apunta a una fórmula con tu cámara para escanearla y resolverla.</p>
+                
+                <div class="camera-container-wrapper" style="width: 100%; height: 320px; background: #000; border: 4px solid #5c3a21; border-radius: 8px; overflow: hidden; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center;">
+                    <!-- Video Stream Element -->
+                    <video id="camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(1);"></video>
+                    
+                    <!-- Scanner Viewfinder Overlay -->
+                    <div class="camera-viewfinder" style="position: absolute; top: 25%; left: 10%; right: 10%; bottom: 35%; border: 2px dashed #34d399; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                        <!-- Laser line animation -->
+                        <div class="camera-laser" style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #34d399; box-shadow: 0 0 8px #34d399; animation: camera-laser-sweep 2s linear infinite;"></div>
+                    </div>
+                    
+                    <!-- Permission/Error Alert -->
+                    <div id="camera-error-msg" class="hidden" style="position: absolute; inset: 0; background: rgba(12,28,20,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; color: #fca5a5; gap: 10px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: #f87171;"></i>
+                        <span id="camera-error-text" style="font-size: 0.9rem;">No se pudo acceder a la cámara. Concede permisos para usar esta función.</span>
+                    </div>
+
+                    <!-- Scan Flash Overlay -->
+                    <div id="camera-flash" style="position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.15s ease-out;"></div>
+                </div>
+
+                <!-- Cámara controls & Selector for Demo Mode -->
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Dropdown for Demo Mode -->
+                    <div id="camera-demo-wrapper" style="display: flex; align-items: center; gap: 8px; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <span style="font-size: 0.75rem; color: #34d399; font-weight: bold;"><i class="fa-solid fa-robot"></i> Simular OCR:</span>
+                        <select id="camera-mock-formula" style="background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; padding: 4px 6px; font-size: 0.75rem; outline: none; cursor: pointer;">
+                            <option value="x^2 - 5x + 6 = 0">Ecuación: x² - 5x + 6 = 0</option>
+                            <option value="int(3x^2 - 2x + 5)dx">Integral: int(3x²-2x+5)dx</option>
+                            <option value="d/dx(x^3 - 4x)">Derivada: d/dx(x³ - 4x)</option>
+                            <option value="mcm(12, 18)">MCM: mcm(12, 18)</option>
+                            <option value="2x+y=5; x-y=1">Sistema 2x2: 2x+y=5; x-y=1</option>
+                            <option value="3/2 + 5/4">Fracciones: 3/2 + 5/4</option>
+                        </select>
+                    </div>
+
+                    <!-- Capture button -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn primary" id="btn-camera-capture" onclick="hubApp.captureCameraFrame()" style="flex-grow: 1; padding: 10px; border-radius: 8px; font-weight: bold; margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fa-solid fa-circle-dot"></i> CAPTURAR Y RESOLVER
+                        </button>
+                        <button class="btn secondary" id="btn-camera-toggle" onclick="hubApp.toggleCameraSource()" style="padding: 10px 15px; border-radius: 8px; margin: 0;" title="Cambiar Cámara">
+                            <i class="fa-solid fa-camera-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="course_data.js"></script>
     <script src="core/storage.js"></script>
@@ -681,5 +1295,39 @@
             });
         }
     </script>
+    <!-- ===== POMODORO FLOATING WIDGET ===== -->
+    <div id="pomodoro-widget" class="pomodoro-widget hidden">
+        <div class="pomodoro-header">
+            <span id="pomodoro-mode-label" class="pomodoro-mode">🍅 TRABAJO</span>
+            <div class="pomodoro-header-btns">
+                <button class="pom-btn-icon" onclick="PomodoroTimer.skipPhase()" title="Saltar fase"><i class="fa-solid fa-forward-step"></i></button>
+                <button class="pom-btn-icon" onclick="PomodoroTimer.toggleWidget()" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="pomodoro-ring-wrap">
+            <svg class="pomodoro-ring" viewBox="0 0 120 120">
+                <circle class="pomodoro-ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="pomodoro-ring-progress" id="pom-ring" cx="60" cy="60" r="52"
+                    stroke-dasharray="326.7" stroke-dashoffset="0"/>
+            </svg>
+            <div class="pomodoro-time-display">
+                <span id="pomodoro-time">25:00</span>
+            </div>
+        </div>
+        <div class="pomodoro-controls">
+            <button class="pom-ctrl-btn" id="pom-btn-start" onclick="PomodoroTimer.toggle()">
+                <i class="fa-solid fa-play"></i> Iniciar
+            </button>
+            <button class="pom-ctrl-btn secondary" onclick="PomodoroTimer.reset()">
+                <i class="fa-solid fa-rotate-left"></i>
+            </button>
+        </div>
+        <div class="pomodoro-sessions">
+            <span id="pom-sessions-dots"></span>
+            <span style="color:var(--text-secondary);font-size:0.78rem;" id="pom-sessions-label">0 sesiones hoy</span>
+        </div>
+    </div>
+    <!-- ===== /POMODORO FLOATING WIDGET ===== -->
+
 </body>
 </html>

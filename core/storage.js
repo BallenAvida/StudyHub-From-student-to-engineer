@@ -36,6 +36,7 @@ const HubStorage = {
     GLOBAL_KEY:  'studyhub_global',
     NOTES_KEY:   'studyhub_notes',
     ACHIEVEMENTS_KEY: 'studyhub_achievements',
+    COURSE_NOTES_KEY: 'studyhub_course_notes',
 
     getAllCourses() {
         try { return JSON.parse(localStorage.getItem(this.COURSES_KEY) || '{}'); }
@@ -105,6 +106,22 @@ const HubStorage = {
             const notes = JSON.parse(localStorage.getItem(this.NOTES_KEY) || '{}');
             notes[questionId] = text;
             localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+            return true;
+        } catch { return false; }
+    },
+
+    getCourseNotes(courseId) {
+        try {
+            const notes = JSON.parse(localStorage.getItem(this.COURSE_NOTES_KEY) || '{}');
+            return notes[courseId] || '';
+        } catch { return ''; }
+    },
+
+    saveCourseNotes(courseId, text) {
+        try {
+            const notes = JSON.parse(localStorage.getItem(this.COURSE_NOTES_KEY) || '{}');
+            notes[courseId] = text;
+            localStorage.setItem(this.COURSE_NOTES_KEY, JSON.stringify(notes));
             return true;
         } catch { return false; }
     },
