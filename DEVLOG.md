@@ -28,3 +28,11 @@ El registro de mi evolución técnica desde Técnico en Análisis de Sistemas ha
 2. **Audio Resúmenes ("Podcasts Educativos"):** Generar guiones dinámicos de debate entre dos locutores usando IA y reproducirlos alternando voces sintéticas del navegador (`SpeechSynthesis`).
 3. **Materiales de Apoyo Automatizados:** Botones en los módulos para autogenerar Preguntas Frecuentes (FAQs), Glosarios de términos complejos y resúmenes ejecutivos (Briefing Docs).
 4. **Bloc de Notas Inteligente:** Un editor de notas del curso enriquecido con capacidades de la IA para expandir ideas, crear analogías o resumir apuntes guardados.
+
+## Entrada #4: Nacimiento del Chat de Estudio (Junio 2026)
+**Contexto:** Implementando el primer pilar de IA del Roadmap de Innovación.
+
+**El desafío técnico:** Mantener la arquitectura agnóstica de la aplicación sin duplicar el código de llamada de API para Gemini y Claude. Decidí estructurar un prompt compilado que pre-alimenta la API con todo el material teórico de los módulos en cada mensaje, permitiendo mantener el historial conversacional y un contexto de tutor de estudio súper denso.
+
+**Hito del día:** Implementación exitosa del "Chat de Estudio" (Pregúntale a tus Apuntes) con UI glassmorphic, globos interactivos, soporte para fórmulas matemáticas mediante KaTeX e indicador dinámico de carga. El motor es 100% resiliente y orienta al usuario si no tiene configurada su API Key.
+

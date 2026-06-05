@@ -2334,6 +2334,235 @@ ${errorText}`;
             </div>
         `;
         document.body.appendChild(modal);
+    },
+
+    // ── Study Chat (Pregúntale a tus Apuntes) ────────────────────
+    chatHistory: [],
+
+    openCourseChat() {
+        if (!this.currentCourse) return;
+
+        document.getElementById('course-chat-title').textContent = `Chat de Estudio: ${this.currentCourse.title}`;
+        
+        // Setup Provider Badge
+        const config = HubStorage.getApiConfig();
+        const providerNameEl = document.getElementById('course-chat-provider-name');
+        if (providerNameEl) {
+            providerNameEl.textContent = config.provider ? (config.provider.charAt(0).toUpperCase() + config.provider.slice(1)) : 'IA';
+        }
+
+        // Toggle warning if no API key is configured
+        const warningEl = document.getElementById('chat-api-warning');
+        const inputEl = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('btn-send-chat');
+
+        if (!config.key) {
+            if (warningEl) warningEl.classList.remove('hidden');
+            if (inputEl) inputEl.disabled = true;
+            if (sendBtn) sendBtn.disabled = true;
+        } else {
+            if (warningEl) warningEl.classList.add('hidden');
+            if (inputEl) inputEl.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+        }
+
+        // Reset chat message container (keeping the welcome message)
+        const messagesContainer = document.getElementById('chat-messages');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = `
+                <div class="chat-message assistant">
+                    <div class="chat-message-avatar">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="chat-message-body">
+                        <span class="chat-message-sender">Asistente de Estudio</span>
+                        <div class="chat-message-text" id="chat-welcome-text">¡Hola! Puedes hacerme preguntas sobre cualquier tema de este curso. Analizaré todo el material disponible para responder tus dudas.</div>
+                    </div>
+                </div>
+            `;
+            
+            // Set dynamic course-specific greeting
+            const welcomeText = document.getElementById('chat-welcome-text');
+            if (welcomeText) {
+                welcomeText.textContent = `¡Hola! Soy tu asistente de estudio para "${this.currentCourse.title}". Escribe cualquier duda sobre la materia y te responderé utilizando los apuntes oficiales.`;
+            }
+        }
+
+        this.chatHistory = [];
+        this.switchView('view-course-chat');
+    },
+
+    switchToConfigTab(event) {
+        if (event) event.preventDefault();
+        this.switchView('view-configuracion');
+        
+        // Update sidebar menu items visual state
+        const navItems = document.querySelectorAll('.nav-item[data-target]');
+        navItems.forEach(nav => nav.classList.remove('active'));
+        const configNavItem = document.querySelector('.nav-item[data-target="view-configuracion"]');
+        if (configNavItem) configNavItem.classList.add('active');
+    },
+
+    async submitChatMessage(event) {
+        if (event) event.preventDefault();
+
+        const inputEl = document.getElementById('chat-input');
+        if (!inputEl) return;
+
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        inputEl.value = '';
+
+        // Render User Message in UI
+        const messagesContainer = document.getElementById('chat-messages');
+        if (!messagesContainer) return;
+
+        const userMsgHtml = `
+            <div class="chat-message user">
+                <div class="chat-message-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="chat-message-body">
+                    <span class="chat-message-sender">Estudiante</span>
+                    <div class="chat-message-text">${text}</div>
+                </div>
+            </div>
+        `;
+        messagesContainer.insertAdjacentHTML('beforeend', userMsgHtml);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Render Typing Indicator
+        const typingId = 'chat-typing-indicator';
+        const typingHtml = `
+            <div class="chat-message assistant" id="${typingId}">
+                <div class="chat-message-avatar">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                </div>
+                <div class="chat-message-body">
+                    <span class="chat-message-sender">Asistente de Estudio</span>
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        messagesContainer.insertAdjacentHTML('beforeend', typingHtml);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Save to Local history
+        this.chatHistory.push({ role: 'user', text });
+
+        try {
+            // Get AI Response
+            const aiResponse = await this.getAIChatResponse(text);
+
+            // Remove typing indicator
+            const typingIndicatorEl = document.getElementById(typingId);
+            if (typingIndicatorEl) typingIndicatorEl.remove();
+
+            // Save to Local history
+            this.chatHistory.push({ role: 'assistant', text: aiResponse });
+
+            // Render Assistant Message in UI
+            const assistantMsgHtml = `
+                <div class="chat-message assistant">
+                    <div class="chat-message-avatar">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="chat-message-body">
+                        <span class="chat-message-sender">Asistente de Estudio</span>
+                        <div class="chat-message-text">${aiResponse}</div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.insertAdjacentHTML('beforeend', assistantMsgHtml);
+            
+            // Format math if equations are generated (using KaTeX)
+            this.renderMath(messagesContainer);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        } catch (error) {
+            console.error('Error fetching chat response:', error);
+            
+            // Remove typing indicator
+            const typingIndicatorEl = document.getElementById(typingId);
+            if (typingIndicatorEl) typingIndicatorEl.remove();
+
+            const errMsgHtml = `
+                <div class="chat-message assistant" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
+                    <div class="chat-message-avatar" style="color: var(--danger); background: rgba(239, 68, 68, 0.2);">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="chat-message-body">
+                        <span class="chat-message-sender" style="color: var(--danger);">Error</span>
+                        <div class="chat-message-text" style="color: #fca5a5;">Hubo un error al conectar con el servidor de la IA. Por favor, verifica tu conexión a internet o tu API Key en la pestaña Configuración.</div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.insertAdjacentHTML('beforeend', errMsgHtml);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    },
+
+    async getAIChatResponse(userMessage) {
+        if (!this.currentCourse) return '';
+
+        // Build course context
+        let contextText = `MATERIAL DEL CURSO: "${this.currentCourse.title}"\n\n`;
+        const modules = this.currentCourse.modules || {};
+        for (const [key, mod] of Object.entries(modules)) {
+            contextText += `--- MÓDULO: ${mod.title || key} ---\n`;
+            if (mod.content) {
+                // Strip simple HTML tags to keep context lightweight
+                const cleanContent = mod.content.replace(/<[^>]*>/g, ' ');
+                contextText += cleanContent.trim() + '\n\n';
+            }
+        }
+
+        // Build compiled prompt with system rules, course notes, and history
+        let prompt = `Eres un tutor de estudio de Inteligencia Artificial experto y didáctico para el curso "${this.currentCourse.title}".
+Tu objetivo es ayudar al estudiante a responder sus dudas y comprender los conceptos clave del material provisto.
+
+Reglas críticas de comportamiento:
+1. Responde de forma amigable, estructurada y educativa en español.
+2. Basate PRINCIPALMENTE en el material oficial provisto a continuación.
+3. Si la pregunta del estudiante no tiene relación alguna con la materia del curso o no se puede resolver con el material proporcionado, explícaselo amigablemente, pero intenta de todos modos guiarlo usando principios generales alineados al curso.
+4. Si generas fórmulas matemáticas o ecuaciones, escríbelas en notación LaTeX estándar utilizando signos de dólar simple para fórmulas en línea (ej: $E = mc^2$) o doble signo de dólar para fórmulas destacadas (ej: $$a^2 + b^2 = c^2$$), para que el motor KaTeX de la aplicación pueda renderizarlas en vivo.
+
+MATERIAL OFICIAL DEL CURSO:
+=========================================
+${contextText}
+=========================================
+
+Historial del Chat:
+`;
+
+        // Append conversation history
+        this.chatHistory.forEach(msg => {
+            if (msg.role === 'user') {
+                prompt += `Estudiante: ${msg.text}\n`;
+            } else {
+                prompt += `Asistente: ${msg.text}\n`;
+            }
+        });
+
+        // Append current message
+        prompt += `Estudiante: ${userMessage}\nAsistente: `;
+
+        // Execute API call based on configured provider
+        const config = HubStorage.getApiConfig();
+        let rawResponse = '';
+        if (config.provider === 'claude') {
+            rawResponse = await this.callClaudeAPI(prompt, config.key);
+        } else {
+            rawResponse = await this.callGeminiAPI(prompt, config.key);
+        }
+
+        return this.cleanJsonResponse(rawResponse);
     }
 };
 

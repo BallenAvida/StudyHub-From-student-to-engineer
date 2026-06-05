@@ -1,8 +1,22 @@
-# 📝 Registro de Cambios - Sesión de Refactorización SPA
+# 📝 Registro de Cambios - Sesiones de Desarrollo
 
-Este archivo contiene el desglose técnico de lo implementado hoy para que puedas integrarlo en tu `DEVLOG.md`.
+Este archivo contiene el desglose técnico de lo implementado en cada sesión.
 
-## Resumen de la Sesión (Mayo 2026)
+## Resumen de la Sesión (5 de Junio, 2026)
+**Objetivo:** Implementar el "Chat de Estudio" (Tutor de IA) con integración agnóstica de Gemini/Claude y soporte KaTeX en la interfaz.
+
+### Cambios Técnicos Implementados:
+1.  **Frontend (HTML & CSS):**
+    *   Integrado botón de "Chat de Estudio (IA)" en la cabecera de la vista de módulos de cada curso (`view-course-menu`).
+    *   Añadida la estructura del chat en `index.html` (`view-course-chat`) con globos de diálogo diferenciados para Estudiante y Asistente.
+    *   Estilos en `hub.css` para mensajes de chat, avatares dinámicos de FontAwesome, estados de error y una animación interactiva de tres puntos (`typingBounce`) para indicar carga.
+
+2.  **Lógica JavaScript (`hub.js`):**
+    *   `openCourseChat()`: Carga el chat, reinicia el historial local e interactúa con `HubStorage` para verificar la clave de API del usuario. Si no está configurada, muestra un banner de alerta amigable redirigiendo a Configuración.
+    *   `getAIChatResponse()`: Genera un prompt enriquecido compilando los apuntes teóricos de todos los módulos del curso actual y el historial de la conversación. Utiliza `callGeminiAPI` o `callClaudeAPI` de forma transparente.
+    *   `submitChatMessage()`: Maneja el envío del formulario, la actualización del scroll automático en el chat y la visualización de la respuesta formateada con soporte de fórmulas matemáticas vía KaTeX.
+
+## Resumen de la Sesión Anterior (Mayo 2026)
 **Objetivo:** Finalizar la transición a SPA y optimizar la ingesta de datos con feedback granular.
 
 ### Cambios Técnicos Implementados:
