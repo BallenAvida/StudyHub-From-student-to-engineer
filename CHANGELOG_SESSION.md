@@ -15,6 +15,7 @@ Este archivo contiene el desglose técnico de lo implementado en cada sesión.
     *   `openCourseChat()`: Carga el chat, reinicia el historial local e interactúa con `HubStorage` para verificar la clave de API del usuario. Si no está configurada, muestra un banner de alerta amigable redirigiendo a Configuración.
     *   `getAIChatResponse()`: Genera un prompt enriquecido compilando los apuntes teóricos de todos los módulos del curso actual y el historial de la conversación. Utiliza `callGeminiAPI` o `callClaudeAPI` de forma transparente.
     *   `submitChatMessage()`: Maneja el envío del formulario, la actualización del scroll automático en el chat y la visualización de la respuesta formateada con soporte de fórmulas matemáticas vía KaTeX.
+    *   **Bugfix en `callGeminiAPI()`**: Parametrizamos la función para que no obligue a Gemini a responder en formato JSON al utilizar funciones de chat conversacional o explicaciones de código (evitando el error de conexión Bad Request 400).
 
 ## Resumen de la Sesión Anterior (Mayo 2026)
 **Objetivo:** Finalizar la transición a SPA y optimizar la ingesta de datos con feedback granular.

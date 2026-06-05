@@ -1648,7 +1648,7 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
         if (config.provider === 'claude') {
             raw = await this.callClaudeAPI(prompt, config.key);
         } else {
-            raw = await this.callGeminiAPI(prompt, config.key);
+            raw = await this.callGeminiAPI(prompt, config.key, 'json');
         }
         const cleaned = this.cleanJsonResponse(raw);
         const pack = JSON.parse(cleaned);
@@ -1656,8 +1656,12 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
         return pack;
     },
 
-    async callGeminiAPI(prompt, key) {
+    async callGeminiAPI(prompt, key, responseType = 'text') {
         const model = await this.getGeminiModel(key);
+        const genConfig = { temperature: 0.3 };
+        if (responseType === 'json') {
+            genConfig.responseMimeType = 'application/json';
+        }
         const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
             {
@@ -1665,7 +1669,7 @@ ${text ? `MATERIAL:\n${text}` : 'Lee y analiza el documento PDF adjunto para gen
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.3, responseMimeType: 'application/json' }
+                    generationConfig: genConfig
                 })
             }
         );

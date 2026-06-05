@@ -36,3 +36,6 @@ El registro de mi evolución técnica desde Técnico en Análisis de Sistemas ha
 
 **Hito del día:** Implementación exitosa del "Chat de Estudio" (Pregúntale a tus Apuntes) con UI glassmorphic, globos interactivos, soporte para fórmulas matemáticas mediante KaTeX e indicador dinámico de carga. El motor es 100% resiliente y orienta al usuario si no tiene configurada su API Key.
 
+**Corrección técnica posterior:** Solucionamos un error de conexión (Bad Request 400) causado por tener el formato de respuesta JSON (`responseMimeType: 'application/json'`) preestablecido de forma rígida en `callGeminiAPI`. Parametrizamos la función para que funcione en formato de texto libre para el chat conversacional y explicaciones de código, reservando el modo JSON exclusivamente para la generación de packs de estudio.
+
+
