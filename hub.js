@@ -2503,7 +2503,7 @@ ${errorText}`;
                     </div>
                     <div class="chat-message-body">
                         <span class="chat-message-sender" style="color: var(--danger);">Error</span>
-                        <div class="chat-message-text" style="color: #fca5a5;">Hubo un error al conectar con el servidor de la IA. Por favor, verifica tu conexión a internet o tu API Key en la pestaña Configuración.</div>
+                        <div class="chat-message-text" style="color: #fca5a5;">Hubo un error al conectar con el servidor de la IA.<br><br><small style="opacity: 0.85;"><b>Detalle técnico:</b> ${error.message || error}</small></div>
                     </div>
                 </div>
             `;
