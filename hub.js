@@ -404,8 +404,8 @@ const hubApp = {
         const models = (data.models || [])
             .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
             .map(m => m.name.replace('models/', ''));
-        const preferred = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash-latest',
-                           'gemini-1.5-flash-002', 'gemini-1.5-flash-001', 'gemini-1.5-flash'];
+        const preferred = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002',
+                           'gemini-1.5-flash-001', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
         for (const name of preferred) {
             if (models.includes(name)) return name;
         }
