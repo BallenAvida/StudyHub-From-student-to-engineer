@@ -2256,8 +2256,26 @@ const PomodoroTimer = {
 const SRSEngine = {
     STORAGE_KEY: 'hub_srs_cards',
     SESSION_KEY: 'hub_srs_session',
+    CUSTOM_CARDS_KEY: 'hub_custom_flashcards',
 
-    // ── SM-2 storage ─────────────────────────────────────────────
+    getCustomCards() {
+        try {
+            return JSON.parse(localStorage.getItem(this.CUSTOM_CARDS_KEY) || '[]');
+        } catch(e) {
+            return [];
+        }
+    },
+
+    saveCustomCards(cards) {
+        try {
+            localStorage.setItem(this.CUSTOM_CARDS_KEY, JSON.stringify(cards));
+            this.updateNavBadge();
+            return true;
+        } catch(e) {
+            return false;
+        }
+    },
+
     _getAll() {
         try { return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}'); }
         catch { return {}; }
@@ -2371,12 +2389,20 @@ const SRSEngine = {
         const all   = this._getAll();
         const now   = Date.now();
         let total   = 0;
+        
         packs.forEach(pack => {
             this._packToCards(pack).forEach(c => {
                 const meta = all[c.id];
                 if (!meta || meta.nextReview <= now) total++;
             });
         });
+
+        // Add custom cards due count
+        this.getCustomCards().forEach(c => {
+            const meta = all[c.id];
+            if (!meta || meta.nextReview <= now) total++;
+        });
+
         return total;
     },
 
@@ -2394,9 +2420,16 @@ const SRSEngine = {
         const sel = document.getElementById('srs-deck-select');
         if (!sel) return;
         const packs = EngineStorage.getAllPacks();
-        sel.innerHTML = '<option value="">— Elige un curso —</option>' +
-            packs.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+        
+        let html = '<option value="">— Elige un mazo —</option>';
+        html += '<option value="__custom__">⭐ Mis Tarjetas Creadas</option>';
+        html += packs.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+        
+        sel.innerHTML = html;
         this.updateNavBadge();
+
+        this.hideManager();
+        this.hideImporter();
     },
 
     /** Load a deck and start a session */
@@ -2404,12 +2437,17 @@ const SRSEngine = {
         this.deckId = deckId;
         if (!deckId) { this._showState('empty'); return; }
 
-        const pack = EngineStorage.getPack(deckId);
-        if (!pack)  { this._showState('empty'); return; }
+        let cards = [];
+        if (deckId === '__custom__') {
+            cards = this.getCustomCards();
+        } else {
+            const pack = EngineStorage.getPack(deckId);
+            if (!pack) { this._showState('empty'); return; }
+            cards = this._packToCards(pack);
+        }
 
         const all   = this._getAll();
         const now   = Date.now();
-        const cards = this._packToCards(pack);
 
         // Split: due (nextReview <= now) vs new (no meta)
         const due  = cards.filter(c => all[c.id] && all[c.id].nextReview <= now);
@@ -2519,6 +2557,1443 @@ const SRSEngine = {
         if (done)  done.classList.toggle('hidden',  state !== 'done');
         if (card)  card.classList.toggle('hidden',  state !== 'card');
     },
+
+    // ── Custom Cards CRUD & View Management ──────────────────────
+    showManager() {
+        document.getElementById('srs-session-area').classList.add('hidden');
+        document.getElementById('srs-importer-panel').classList.add('hidden');
+        document.getElementById('srs-manager-panel').classList.remove('hidden');
+        this.renderCustomCardsList();
+    },
+
+    hideManager() {
+        document.getElementById('srs-manager-panel').classList.add('hidden');
+        document.getElementById('srs-session-area').classList.remove('hidden');
+    },
+
+    showImporter() {
+        document.getElementById('srs-session-area').classList.add('hidden');
+        document.getElementById('srs-manager-panel').classList.add('hidden');
+        document.getElementById('srs-importer-panel').classList.remove('hidden');
+    },
+
+    hideImporter() {
+        document.getElementById('srs-importer-panel').classList.add('hidden');
+        document.getElementById('srs-session-area').classList.remove('hidden');
+    },
+
+    renderCustomCardsList() {
+        const listEl = document.getElementById('srs-custom-cards-list');
+        const countEl = document.getElementById('srs-custom-count');
+        if (!listEl) return;
+
+        const cards = this.getCustomCards();
+        if (countEl) countEl.textContent = cards.length;
+
+        if (cards.length === 0) {
+            listEl.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding: 1.5rem 1rem;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 1.5rem; opacity: 0.15; margin-bottom: 6px; display: block;"></i>
+                    No has creado tarjetas todavía. Usa el formulario de arriba.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        cards.forEach((c, idx) => {
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 6px 10px; gap: 10px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 0.82rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Q: ${this.escapeHTML(c.front)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">A: ${this.escapeHTML(c.back)}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 0.65rem; background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; color: var(--text-secondary);">${this.escapeHTML(c.domain)}</span>
+                        <button class="btn secondary" onclick="SRSEngine.deleteCustomCard(${idx})" style="padding: 4px 8px; font-size: 0.75rem; margin: 0; color: #f87171;" title="Eliminar tarjeta">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        listEl.innerHTML = html;
+    },
+
+    escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    },
+
+    addCustomCard() {
+        const frontEl = document.getElementById('srs-new-front');
+        const backEl = document.getElementById('srs-new-back');
+        const domainEl = document.getElementById('srs-new-domain');
+
+        if (!frontEl || !backEl) return;
+
+        const front = frontEl.value.trim();
+        const back = backEl.value.trim();
+        const domain = (domainEl && domainEl.value.trim()) || 'General';
+
+        if (!front || !back) {
+            alert('Por favor completa los campos de Pregunta y Respuesta.');
+            return;
+        }
+
+        const cards = this.getCustomCards();
+        const hash = this._hash(front);
+        const newCard = {
+            id: this._cardId('__custom__', hash),
+            front,
+            back,
+            domain
+        };
+
+        if (cards.some(c => c.id === newCard.id)) {
+            alert('Ya existe una tarjeta con esa pregunta.');
+            return;
+        }
+
+        cards.push(newCard);
+        this.saveCustomCards(cards);
+
+        frontEl.value = '';
+        backEl.value = '';
+        if (domainEl) domainEl.value = '';
+
+        this.renderCustomCardsList();
+        this.updateNavBadge();
+        
+        if (this.deckId === '__custom__') {
+            this.loadDeck('__custom__');
+        }
+    },
+
+    deleteCustomCard(idx) {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta tarjeta?')) return;
+
+        const cards = this.getCustomCards();
+        
+        if (cards[idx]) {
+            const cardId = cards[idx].id;
+            const all = this._getAll();
+            if (all[cardId]) {
+                delete all[cardId];
+                this._saveAll(all);
+            }
+        }
+
+        cards.splice(idx, 1);
+        this.saveCustomCards(cards);
+
+        this.renderCustomCardsList();
+        this.updateNavBadge();
+
+        if (this.deckId === '__custom__') {
+            this.loadDeck('__custom__');
+        }
+    },
+
+    exportCustomCards() {
+        const cards = this.getCustomCards();
+        if (cards.length === 0) {
+            alert('No hay tarjetas personalizadas para exportar.');
+            return;
+        }
+
+        const dataStr = JSON.stringify(cards, null, 4);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'studyhub-srs-deck.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    importCustomCards() {
+        const fileInput = document.getElementById('srs-import-file-input');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert('Por favor selecciona un archivo JSON primero.');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedCards = JSON.parse(e.target.result);
+                if (!Array.isArray(importedCards)) {
+                    alert('El archivo JSON debe contener una lista (array) de tarjetas.');
+                    return;
+                }
+
+                const validCards = [];
+                importedCards.forEach(c => {
+                    if (c && c.front && c.back) {
+                        const domain = c.domain || 'General';
+                        const hash = this._hash(c.front);
+                        validCards.push({
+                            id: this._cardId('__custom__', hash),
+                            front: c.front,
+                            back: c.back,
+                            domain: domain
+                        });
+                    }
+                });
+
+                if (validCards.length === 0) {
+                    alert('No se encontraron tarjetas válidas en el archivo (deben tener los campos front y back).');
+                    return;
+                }
+
+                const currentCards = this.getCustomCards();
+                let addedCount = 0;
+                validCards.forEach(vc => {
+                    if (!currentCards.some(cc => cc.id === vc.id)) {
+                        currentCards.push(vc);
+                        addedCount++;
+                    }
+                });
+
+                this.saveCustomCards(currentCards);
+                alert(`Importación completada. Se añadieron ${addedCount} tarjetas nuevas.`);
+                
+                fileInput.value = '';
+
+                if (this.deckId === '__custom__') {
+                    this.loadDeck('__custom__');
+                }
+
+                this.hideImporter();
+            } catch (err) {
+                alert('Error al leer el archivo JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+};
+
+const UnitConverter = {
+    CATEGORIES: {
+        length: {
+            name: 'Longitud',
+            base: 'm',
+            units: {
+                m: { name: 'Metros (m)', factor: 1 },
+                km: { name: 'Kilómetros (km)', factor: 1000 },
+                cm: { name: 'Centímetros (cm)', factor: 0.01 },
+                mm: { name: 'Milímetros (mm)', factor: 0.001 },
+                mi: { name: 'Millas (mi)', factor: 1609.344 },
+                yd: { name: 'Yardas (yd)', factor: 0.9144 },
+                ft: { name: 'Pies (ft)', factor: 0.3048 },
+                in: { name: 'Pulgadas (in)', factor: 0.0254 }
+            }
+        },
+        mass: {
+            name: 'Masa / Peso',
+            base: 'kg',
+            units: {
+                kg: { name: 'Kilogramos (kg)', factor: 1 },
+                g: { name: 'Gramos (g)', factor: 0.001 },
+                mg: { name: 'Miligramos (mg)', factor: 0.000001 },
+                lb: { name: 'Libras (lb)', factor: 0.45359237 },
+                oz: { name: 'Onzas (oz)', factor: 0.028349523 },
+                t: { name: 'Toneladas (t)', factor: 1000 }
+            }
+        },
+        temperature: {
+            name: 'Temperatura',
+            base: 'C',
+            units: {
+                C: { name: 'Celsius (°C)' },
+                F: { name: 'Fahrenheit (°F)' },
+                K: { name: 'Kelvin (K)' }
+            }
+        },
+        speed: {
+            name: 'Velocidad',
+            base: 'm/s',
+            units: {
+                'm/s': { name: 'Metros por segundo (m/s)', factor: 1 },
+                'km/h': { name: 'Kilómetros por hora (km/h)', factor: 0.27777778 },
+                'mph': { name: 'Millas por hora (mph)', factor: 0.44704 },
+                'kt': { name: 'Nudos (kt)', factor: 0.51444444 }
+            }
+        },
+        area: {
+            name: 'Área',
+            base: 'm2',
+            units: {
+                'm2': { name: 'Metros cuadrados (m²)', factor: 1 },
+                'km2': { name: 'Kilómetros cuadrados (km²)', factor: 1000000 },
+                'ha': { name: 'Hectáreas (ha)', factor: 10000 },
+                'ac': { name: 'Acres (ac)', factor: 4046.85642 },
+                'ft2': { name: 'Pies cuadrados (ft²)', factor: 0.09290304 }
+            }
+        },
+        volume: {
+            name: 'Volumen',
+            base: 'L',
+            units: {
+                L: { name: 'Litros (L)', factor: 1 },
+                mL: { name: 'Mililitros (mL)', factor: 0.001 },
+                m3: { name: 'Metros cúbicos (m³)', factor: 1000 },
+                gal: { name: 'Galones (gal)', factor: 3.78541178 },
+                qt: { name: 'Cuartos (qt)', factor: 0.946352946 },
+                cup: { name: 'Tazas (cup)', factor: 0.24 }
+            }
+        },
+        energy: {
+            name: 'Energía',
+            base: 'J',
+            units: {
+                J: { name: 'Julios (J)', factor: 1 },
+                kJ: { name: 'Kilojulios (kJ)', factor: 1000 },
+                cal: { name: 'Calorías (cal)', factor: 4.184 },
+                kcal: { name: 'Kilocalorías (kcal)', factor: 4184 },
+                Wh: { name: 'Vatios-hora (Wh)', factor: 3600 },
+                kWh: { name: 'Kilovatios-hora (kWh)', factor: 3600000 }
+            }
+        }
+    },
+
+    initView() {
+        const categorySelect = document.getElementById('converter-category');
+        if (!categorySelect) return;
+        this.onCategoryChange(categorySelect.value);
+    },
+
+    onCategoryChange(category) {
+        const catData = this.CATEGORIES[category];
+        if (!catData) return;
+
+        const leftSelect = document.getElementById('converter-unit-left');
+        const rightSelect = document.getElementById('converter-unit-right');
+        if (!leftSelect || !rightSelect) return;
+
+        const optionsHtml = Object.entries(catData.units)
+            .map(([key, u]) => `<option value="${key}">${u.name}</option>`)
+            .join('');
+
+        leftSelect.innerHTML = optionsHtml;
+        rightSelect.innerHTML = optionsHtml;
+
+        const unitKeys = Object.keys(catData.units);
+        if (unitKeys.length >= 2) {
+            leftSelect.value = unitKeys[0];
+            rightSelect.value = unitKeys[1];
+        }
+
+        const leftInput = document.getElementById('converter-val-left');
+        if (leftInput) leftInput.value = "1";
+        
+        this.convert('left');
+    },
+
+    convert(direction) {
+        const category = document.getElementById('converter-category').value;
+        const catData = this.CATEGORIES[category];
+        if (!catData) return;
+
+        const leftSelect = document.getElementById('converter-unit-left');
+        const rightSelect = document.getElementById('converter-unit-right');
+        const leftInput = document.getElementById('converter-val-left');
+        const rightInput = document.getElementById('converter-val-right');
+        const stepsEl = document.getElementById('converter-steps');
+
+        if (!leftSelect || !rightSelect || !leftInput || !rightInput) return;
+
+        const uLeft = leftSelect.value;
+        const uRight = rightSelect.value;
+
+        let val, sourceUnit, destUnit, sourceInput, destInput;
+
+        if (direction === 'left') {
+            val = parseFloat(leftInput.value);
+            sourceUnit = uLeft;
+            destUnit = uRight;
+            sourceInput = leftInput;
+            destInput = rightInput;
+        } else {
+            val = parseFloat(rightInput.value);
+            sourceUnit = uRight;
+            destUnit = uLeft;
+            sourceInput = rightInput;
+            destInput = leftInput;
+        }
+
+        if (isNaN(val)) {
+            destInput.value = '';
+            if (stepsEl) stepsEl.innerHTML = 'Ingresa un valor numérico para ver la explicación paso a paso.';
+            return;
+        }
+
+        let result;
+        let formulaSteps = '';
+
+        if (category === 'temperature') {
+            if (sourceUnit === destUnit) {
+                result = val;
+                formulaSteps = `Misma unidad. Sin conversión necesaria.`;
+            } else if (sourceUnit === 'C' && destUnit === 'F') {
+                result = (val * 9/5) + 32;
+                formulaSteps = `Fórmula: °F = (°C \\times \\frac{9}{5}) + 32\\\\ Pasos: (${this.round(val)} \\times 1.8) + 32 = ${this.round(val * 1.8)} + 32 = ${this.round(result)}`;
+            } else if (sourceUnit === 'C' && destUnit === 'K') {
+                result = val + 273.15;
+                formulaSteps = `Fórmula: K = °C + 273.15\\\\ Pasos: ${this.round(val)} + 273.15 = ${this.round(result)}`;
+            } else if (sourceUnit === 'F' && destUnit === 'C') {
+                result = (val - 32) * 5/9;
+                formulaSteps = `Fórmula: °C = (°F - 32) \\times \\frac{5}{9}\\\\ Pasos: (${this.round(val)} - 32) \\times \\frac{5}{9} = ${this.round(val - 32)} \\times 0.5556 = ${this.round(result)}`;
+            } else if (sourceUnit === 'F' && destUnit === 'K') {
+                result = ((val - 32) * 5/9) + 273.15;
+                formulaSteps = `Fórmula: K = ((°F - 32) \\times \\frac{5}{9}) + 273.15\\\\ Pasos: (${this.round(val - 32)} \\times \\frac{5}{9}) + 273.15 = ${this.round((val - 32) * 5/9)} + 273.15 = ${this.round(result)}`;
+            } else if (sourceUnit === 'K' && destUnit === 'C') {
+                result = val - 273.15;
+                formulaSteps = `Fórmula: °C = K - 273.15\\\\ Pasos: ${this.round(val)} - 273.15 = ${this.round(result)}`;
+            } else if (sourceUnit === 'K' && destUnit === 'F') {
+                result = ((val - 273.15) * 9/5) + 32;
+                formulaSteps = `Fórmula: °F = ((K - 273.15) \\times \\frac{9}{5}) + 32\\\\ Pasos: (${this.round(val - 273.15)} \\times 1.8) + 32 = ${this.round((val - 273.15) * 1.8)} + 32 = ${this.round(result)}`;
+            }
+        } else {
+            const fSource = catData.units[sourceUnit].factor;
+            const fDest = catData.units[destUnit].factor;
+
+            const valInBase = val * fSource;
+            result = valInBase / fDest;
+
+            const sourceName = catData.units[sourceUnit].name.split(' ')[0];
+            const destName = catData.units[destUnit].name.split(' ')[0];
+
+            formulaSteps = `<strong>Pasos de conversión:</strong><br>`;
+            formulaSteps += `1. Convertir de ${sourceUnit} a la unidad base (${catData.base}):<br>`;
+            formulaSteps += `${this.round(val)}\\text{ ${sourceName}} \\times ${this.round(fSource)} = ${this.round(valInBase)}\\text{ ${catData.base}}<br>`;
+            formulaSteps += `2. Convertir de la unidad base (${catData.base}) a la unidad de destino (${destUnit}):<br>`;
+            formulaSteps += `\\frac{${this.round(valInBase)}\\text{ ${catData.base}}}{${this.round(fDest)}} = ${this.round(result)}\\text{ ${destName}}`;
+        }
+
+        destInput.value = this.round(result);
+
+        if (stepsEl) {
+            if (typeof katex !== 'undefined') {
+                // Render text with math blocks wrapped in $
+                let formatted = formulaSteps;
+                // If it doesn't have math formatting, let's wrap some expressions
+                // For temperature we wrote them with LaTeX. For factor conversions, let's wrap calculations in $
+                if (category !== 'temperature') {
+                    // Let's replace the formulas in lines to LaTeX math
+                    formatted = formatted
+                        .replace(/([0-9.]+)\\text\{ ([a-zA-Z0-9³²()°/]+)\} \\times ([0-9.]+)/g, '$1 \\text{ $2} \\times $3')
+                        .replace(/= ([0-9.]+)\\text\{ ([a-zA-Z0-9³²()°/]+)\}/g, '= $1 \\text{ $2}')
+                        .replace(/\\frac\{([0-9.]+)\\text\{ ([a-zA-Z0-9³²()°/]+)\}\}\{([0-9.]+)\}/g, '\\frac{$1 \\text{ $2}}{$3}')
+                        .replace(/= ([0-9.]+)\\text\{ ([a-zA-Z0-9³²()°/]+)\}/g, '= $1 \\text{ $2}');
+                    
+                    // Simple replacement of formulas in lines to LaTeX math
+                    // We can wrap lines with formulas in $
+                    // To do it cleanly:
+                    formatted = formatted
+                        .replace(/([0-9.]+\\text\{[^}]+\}\s*[\times/]\s*[0-9.]+\s*=\s*[0-9.]+\\text\{[^}]+\})/g, '$$$1$$')
+                        .replace(/(\\frac\{[0-9.]+\\text\{[^}]+\}\}\{[0-9.]+\}\s*=\s*[0-9.]+\\text\{[^}]+\})/g, '$$$1$$');
+                } else {
+                    // Temperature formulas already have $...$ in raw string
+                    // Let's make sure they are wrapped
+                    formatted = formulaSteps.replace(/Fórmula: ([^\\]+)/g, 'Fórmula: $$$1$$').replace(/Pasos: ([^\\]+)/g, 'Pasos: $$$1$$');
+                }
+
+                let renderedHtml = formatted.replace(/\$\$([\s\S]+?)\$\$/g, (match, expr) => {
+                    return katex.renderToString(expr, { throwOnError: false, displayMode: true });
+                }).replace(/\$([^\$]+)\$/g, (match, expr) => {
+                    return katex.renderToString(expr, { throwOnError: false, displayMode: false });
+                });
+                stepsEl.innerHTML = renderedHtml;
+            } else {
+                stepsEl.innerHTML = formulaSteps;
+            }
+        }
+    },
+
+    round(num) {
+        return Math.round(num * 1000000) / 1000000;
+    }
+};
+
+const GlobalSearch = {
+    index: [],
+    selectedIndex: -1,
+    currentResults: [],
+
+    buildIndex() {
+        this.index = [];
+
+        // 1. Index course packs
+        const packs = EngineStorage.getAllPacks();
+        packs.forEach(pack => {
+            // Course
+            this.index.push({
+                type: 'course',
+                title: pack.title || pack.id,
+                subtitle: `Curso completo`,
+                text: pack.description || '',
+                target: { view: 'view-course-menu', courseId: pack.id }
+            });
+
+            // Modules / Topics
+            if (pack.modules) {
+                Object.entries(pack.modules).forEach(([modKey, mod]) => {
+                    this.index.push({
+                        type: 'topic',
+                        title: mod.title || modKey,
+                        subtitle: `Tema en ${pack.title || pack.id}`,
+                        text: mod.description || '',
+                        target: { view: 'view-course-menu', courseId: pack.id, moduleKey: modKey }
+                    });
+
+                    // Flashcards
+                    if (mod.questions) {
+                        mod.questions.forEach((q, idx) => {
+                            this.index.push({
+                                type: 'flashcard',
+                                title: q.question,
+                                subtitle: `Flashcard en ${mod.title || modKey}`,
+                                text: q.answer || '',
+                                target: { view: 'view-srs', courseId: pack.id, flashcardIndex: idx }
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Course Note
+            const noteText = HubStorage.getCourseNotes(pack.id);
+            if (noteText) {
+                this.index.push({
+                    type: 'note',
+                    title: `Notas: ${pack.title || pack.id}`,
+                    subtitle: `Apuntes de curso`,
+                    text: noteText,
+                    target: { view: 'view-notas', noteId: pack.id }
+                });
+            }
+        });
+
+        // 2. General Note
+        const generalNote = localStorage.getItem('hub_general_notes');
+        if (generalNote) {
+            this.index.push({
+                type: 'note',
+                title: 'Notas Generales',
+                subtitle: 'Apuntes personales',
+                text: generalNote,
+                target: { view: 'view-notas', noteId: '__general__' }
+            });
+        }
+
+        // 3. Calculator History
+        try {
+            const calcHistory = JSON.parse(localStorage.getItem('studyhub_calculator_history')) || [];
+            calcHistory.forEach(expr => {
+                this.index.push({
+                    type: 'calculator',
+                    title: expr,
+                    subtitle: 'Historial de calculadora',
+                    text: expr,
+                    target: { view: 'view-inicio', action: 'solve', expression: expr }
+                });
+            });
+        } catch (e) {
+            console.error("Error indexing calc history", e);
+        }
+    },
+
+    open(e) {
+        if (e) e.preventDefault();
+        
+        this.buildIndex();
+
+        const modal = document.getElementById('global-search-modal');
+        const input = document.getElementById('global-search-input');
+        
+        if (modal && input) {
+            modal.classList.remove('hidden');
+            input.value = '';
+            input.focus();
+            this.selectedIndex = -1;
+            this.renderResults([]);
+        }
+    },
+
+    close() {
+        const modal = document.getElementById('global-search-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    onInput() {
+        const input = document.getElementById('global-search-input');
+        if (!input) return;
+
+        const query = input.value.trim().toLowerCase();
+        if (!query) {
+            this.renderResults([]);
+            return;
+        }
+
+        const matches = this.index.filter(doc => {
+            const inTitle = doc.title.toLowerCase().includes(query);
+            const inText = doc.text.toLowerCase().includes(query);
+            const inSubtitle = doc.subtitle.toLowerCase().includes(query);
+            return inTitle || inText || inSubtitle;
+        });
+
+        matches.sort((a, b) => {
+            const aTitle = a.title.toLowerCase().includes(query);
+            const bTitle = b.title.toLowerCase().includes(query);
+            if (aTitle && !bTitle) return -1;
+            if (!aTitle && bTitle) return 1;
+            return 0;
+        });
+
+        this.selectedIndex = matches.length > 0 ? 0 : -1;
+        this.renderResults(matches);
+    },
+
+    renderResults(results) {
+        const container = document.getElementById('global-search-results');
+        if (!container) return;
+
+        if (results.length === 0) {
+            const input = document.getElementById('global-search-input');
+            const hasQuery = input && input.value.trim();
+            container.innerHTML = `
+                <div class="search-empty-state">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size:2rem; opacity:0.15; margin-bottom: 8px;"></i>
+                    ${hasQuery ? 'No se encontraron resultados.' : 'Escribe para buscar...'}
+                </div>
+            `;
+            this.currentResults = [];
+            return;
+        }
+
+        let html = '';
+        results.forEach((doc, idx) => {
+            const iconMap = {
+                course: 'fa-book',
+                topic: 'fa-bookmark',
+                flashcard: 'fa-brain',
+                note: 'fa-pen-nib',
+                calculator: 'fa-calculator'
+            };
+            const icon = iconMap[doc.type] || 'fa-magnifying-glass';
+            const isSelected = idx === this.selectedIndex ? 'selected' : '';
+            const cleanText = doc.text.replace(/[#*`~_>$$\n]/g, ' ').substring(0, 85).trim() + (doc.text.length > 85 ? '...' : '');
+
+            html += `
+                <div class="search-item ${isSelected}" data-index="${idx}" onclick="GlobalSearch.selectItem(${idx}, ${JSON.stringify(doc.target).replace(/"/g, '&quot;')})">
+                    <div class="search-item-icon ${doc.type}">
+                        <i class="fa-solid ${icon}"></i>
+                    </div>
+                    <div class="search-item-info">
+                        <div class="search-item-title">${this.escapeHTML(doc.title)}</div>
+                        <div class="search-item-subtitle">${this.escapeHTML(doc.subtitle)} ${cleanText ? ' • ' + this.escapeHTML(cleanText) : ''}</div>
+                    </div>
+                    <div class="search-item-badge">${doc.type.toUpperCase()}</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        this.currentResults = results;
+    },
+
+    escapeHTML(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    },
+
+    selectItem(idx, target) {
+        this.close();
+        
+        if (target.view) {
+            const targetNav = document.querySelector(`.sidebar-nav .nav-item[data-target="${target.view}"]`);
+            if (targetNav) {
+                document.querySelectorAll('.sidebar-nav .nav-item').forEach(nav => nav.classList.remove('active'));
+                targetNav.classList.add('active');
+            }
+
+            hubApp.switchView(target.view);
+
+            if (target.view === 'view-course-menu' && target.courseId) {
+                const pack = EngineStorage.getPack(target.courseId);
+                if (pack) {
+                    hubApp.currentCourse = pack;
+                    hubApp.renderCourseModules();
+                    
+                    if (target.moduleKey) {
+                        hubApp.activeCourseTab = 'modules';
+                        hubApp.renderCourseModules();
+                        
+                        setTimeout(() => {
+                            const modEl = document.getElementById(`module-${target.moduleKey}`);
+                            if (modEl) {
+                                modEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                modEl.classList.add('pulse-highlight');
+                                setTimeout(() => modEl.classList.remove('pulse-highlight'), 2000);
+                            }
+                        }, 200);
+                    }
+                }
+            } else if (target.view === 'view-srs' && target.courseId) {
+                setTimeout(() => {
+                    const deckSelect = document.getElementById('srs-deck-select');
+                    if (deckSelect) {
+                        deckSelect.value = target.courseId;
+                        SRSEngine.loadDeck(target.courseId);
+                    }
+                }, 100);
+            } else if (target.view === 'view-notas') {
+                setTimeout(() => {
+                    NotesEditor.loadNote(target.noteId);
+                    const notesSelect = document.getElementById('notes-course-select');
+                    if (notesSelect) notesSelect.value = target.noteId;
+                }, 100);
+            } else if (target.view === 'view-inicio' && target.action === 'solve' && target.expression) {
+                setTimeout(() => {
+                    const solverInput = document.getElementById('solver-input');
+                    if (solverInput) {
+                        solverInput.value = target.expression;
+                        hubApp.switchSolverTab('solve');
+                        if (typeof hubApp.solveMathProblem === 'function') {
+                            hubApp.solveMathProblem();
+                        }
+                    }
+                }, 100);
+            }
+        }
+    },
+
+    onKeydown(e) {
+        if (!this.currentResults || this.currentResults.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.selectedIndex = (this.selectedIndex + 1) % this.currentResults.length;
+            this.renderResults(this.currentResults);
+            this.scrollToSelected();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.selectedIndex = (this.selectedIndex - 1 + this.currentResults.length) % this.currentResults.length;
+            this.renderResults(this.currentResults);
+            this.scrollToSelected();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (this.selectedIndex >= 0 && this.selectedIndex < this.currentResults.length) {
+                const doc = this.currentResults[this.selectedIndex];
+                this.selectItem(this.selectedIndex, doc.target);
+            }
+        }
+    },
+
+    scrollToSelected() {
+        const container = document.getElementById('global-search-results');
+        const selected = container.querySelector('.search-item.selected');
+        if (container && selected) {
+            const cTop = container.scrollTop;
+            const cBottom = cTop + container.clientHeight;
+            const sTop = selected.offsetTop;
+            const sBottom = sTop + selected.clientHeight;
+
+            if (sTop < cTop) {
+                container.scrollTop = sTop;
+            } else if (sBottom > cBottom) {
+                container.scrollTop = sBottom - container.clientHeight;
+            }
+        }
+    }
+};
+
+const StatsCalculator = {
+    calculate() {
+        const inputEl = document.getElementById('stats-input');
+        const resultsEl = document.getElementById('stats-results');
+        if (!inputEl || !resultsEl) return;
+
+        const rawVal = inputEl.value;
+        if (!rawVal.trim()) {
+            alert('Por favor ingresa algunos números separados por comas.');
+            return;
+        }
+
+        const vals = rawVal.split(',')
+            .map(x => x.trim())
+            .filter(x => x !== '')
+            .map(x => parseFloat(x))
+            .filter(x => !isNaN(x));
+
+        if (vals.length === 0) {
+            alert('No se encontraron números válidos en el campo. Asegúrate de separarlos por comas (ej. 10, 15, 20).');
+            return;
+        }
+
+        const n = vals.length;
+        const sum = vals.reduce((a, b) => a + b, 0);
+        const mean = sum / n;
+        
+        const sorted = [...vals].sort((a, b) => a - b);
+        
+        let median;
+        let medianSteps = '';
+        if (n % 2 !== 0) {
+            median = sorted[Math.floor(n / 2)];
+            medianSteps = `Como n = ${n} es impar, la mediana es el dato central en la posición \\frac{n+1}{2} = \\frac{${n}+1}{2} = ${Math.floor(n/2) + 1} de los datos ordenados:\\\\ Me = ${this.round(median)}`;
+        } else {
+            const mid1 = sorted[n / 2 - 1];
+            const mid2 = sorted[n / 2];
+            median = (mid1 + mid2) / 2;
+            medianSteps = `Como n = ${n} es par, la mediana es el promedio de los dos datos centrales en las posiciones \\frac{n}{2} = ${n/2} y \\frac{n}{2}+1 = ${n/2 + 1} (valores ${this.round(mid1)} y ${this.round(mid2)}):\\\\ Me = \\frac{${this.round(mid1)} + ${this.round(mid2)}}{2} = ${this.round(median)}`;
+        }
+
+        const freqs = {};
+        vals.forEach(v => freqs[v] = (freqs[v] || 0) + 1);
+        let maxFreq = 0;
+        Object.values(freqs).forEach(f => { if (f > maxFreq) maxFreq = f; });
+        const modes = [];
+        Object.entries(freqs).forEach(([v, f]) => { if (f === maxFreq) modes.push(parseFloat(v)); });
+        let modeText = '';
+        let modeSteps = '';
+        if (maxFreq === 1) {
+            modeText = 'No hay moda';
+            modeSteps = 'Todos los datos aparecen exactamente 1 vez. Por lo tanto, no hay moda.';
+        } else if (modes.length === vals.length) {
+            modeText = 'No hay moda';
+            modeSteps = 'Todos los datos tienen la misma frecuencia. Por lo tanto, no hay moda.';
+        } else {
+            modeText = modes.map(m => this.round(m)).join(', ');
+            modeSteps = `El/los valor(es) con mayor frecuencia (${maxFreq} apariciones) es/son: $${modeText}$.`;
+        }
+
+        const min = sorted[0];
+        const max = sorted[n - 1];
+        const range = max - min;
+
+        let lowerHalf, upperHalf;
+        let q1Steps = '';
+        let q3Steps = '';
+        if (n % 2 !== 0) {
+            const midIdx = Math.floor(n / 2);
+            lowerHalf = sorted.slice(0, midIdx);
+            upperHalf = sorted.slice(midIdx + 1);
+            q1Steps = `Como n = ${n} es impar, excluimos la mediana (${this.round(sorted[midIdx])}) y tomamos la mitad inferior de los datos: \\{${lowerHalf.map(x=>this.round(x)).join(', ')}\\}.`;
+            q3Steps = `Como n = ${n} es impar, excluimos la mediana (${this.round(sorted[midIdx])}) y tomamos la mitad superior de los datos: \\{${upperHalf.map(x=>this.round(x)).join(', ')}\\}.`;
+        } else {
+            const midIdx = n / 2;
+            lowerHalf = sorted.slice(0, midIdx);
+            upperHalf = sorted.slice(midIdx);
+            q1Steps = `Como n = ${n} es par, dividimos los datos exactamente a la mitad. La mitad inferior es: \\{${lowerHalf.map(x=>this.round(x)).join(', ')}\\}.`;
+            q3Steps = `Como n = ${n} es par, dividimos los datos exactamente a la mitad. La mitad superior es: \\{${upperHalf.map(x=>this.round(x)).join(', ')}\\}.`;
+        }
+
+        const q1 = this.getMedianOfArray(lowerHalf);
+        const q3 = this.getMedianOfArray(upperHalf);
+        const iqr = q3 - q1;
+
+        q1Steps += `\\\\ El cuartil 1 es la mediana de esta mitad inferior:\\\\ Q_1 = ${this.round(q1)}`;
+        q3Steps += `\\\\ El cuartil 3 es la mediana de esta mitad superior:\\\\ Q_3 = ${this.round(q3)}`;
+
+        let sumSqDiff = 0;
+        let diffsSteps = [];
+        vals.forEach(v => {
+            const diff = v - mean;
+            const diffSq = diff * diff;
+            sumSqDiff += diffSq;
+            if (diffsSteps.length < 8) {
+                diffsSteps.push(`(${this.round(v)} - ${this.round(mean)})^2 = (${this.round(diff)})^2 = ${this.round(diffSq)}`);
+            }
+        });
+        if (vals.length > 8) {
+            diffsSteps.push('...');
+        }
+
+        const popVar = sumSqDiff / n;
+        const popStd = Math.sqrt(popVar);
+        const sampleVar = n > 1 ? sumSqDiff / (n - 1) : 0;
+        const sampleStd = Math.sqrt(sampleVar);
+
+        let html = `
+            <div class="glass-panel" style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+                <h3 style="margin-top:0; margin-bottom:12px; font-size:1rem; color:var(--primary);"><i class="fa-solid fa-list-check"></i> Resumen de Resultados</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Tamaño (n)</div>
+                        <div style="font-size:1.1rem; font-weight:bold; color:var(--text-primary); margin-top:2px;">${n}</div>
+                    </div>
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Media (x̄)</div>
+                        <div style="font-size:1.1rem; font-weight:bold; color:#60a5fa; margin-top:2px;">${this.round(mean)}</div>
+                    </div>
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Mediana (Me)</div>
+                        <div style="font-size:1.1rem; font-weight:bold; color:#a78bfa; margin-top:2px;">${this.round(median)}</div>
+                    </div>
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Moda (Mo)</div>
+                        <div style="font-size:0.95rem; font-weight:bold; color:#f472b6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${modeText}">${modeText}</div>
+                    </div>
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Desv. Est. (s)</div>
+                        <div style="font-size:1.1rem; font-weight:bold; color:#34d399; margin-top:2px;">${this.round(sampleStd)}</div>
+                    </div>
+                    <div class="stat-badge-item" style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Rango IQR</div>
+                        <div style="font-size:1.1rem; font-weight:bold; color:#f59e0b; margin-top:2px;">${this.round(iqr)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel" style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+                <h4 style="margin-top:0; margin-bottom:10px; font-size:0.9rem; color:#60a5fa;"><i class="fa-solid fa-calculator"></i> Paso 1: Tendencia Central</h4>
+                
+                <div style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+                    <div><strong>Datos organizados de menor a mayor:</strong><br>
+                        <span style="font-family: monospace; color: #a7f3d0; word-break: break-all;">${sorted.map(x=>this.round(x)).join(', ')}</span>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>1.1 Media Aritmética (\\bar{x}):</strong>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(`\\bar{x} = \\frac{\\sum_{i=1}^{n} x_i}{n} = \\frac{${this.round(sum)}}{${n}} = ${this.round(mean)}`)}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>1.2 Mediana (Me):</strong>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(medianSteps)}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>1.3 Moda (Mo):</strong>
+                        <div style="margin-top:4px;">${modeSteps}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel" style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+                <h4 style="margin-top:0; margin-bottom:10px; font-size:0.9rem; color:#a78bfa;"><i class="fa-solid fa-arrows-split-up-and-left"></i> Paso 2: Medidas de Posición</h4>
+                
+                <div style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+                    <div>
+                        <strong>2.1 Primer Cuartil (Q_1):</strong>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(q1Steps)}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>2.2 Tercer Cuartil (Q_3):</strong>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(q3Steps)}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>2.3 Rango Intercuartílico (IQR):</strong>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(`IQR = Q_3 - Q_1 = ${this.round(q3)} - ${this.round(q1)} = ${this.round(iqr)}`)}
+                        </div>
+                        <div style="margin-top:4px;">El IQR representa el rango donde se encuentra el 50% central de los datos.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel" style="padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+                <h4 style="margin-top:0; margin-bottom:10px; font-size:0.9rem; color:#34d399;"><i class="fa-solid fa-wave-square"></i> Paso 3: Dispersión</h4>
+                
+                <div style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+                    <div>
+                        <strong>3.1 Suma de Desviaciones al Cuadrado:</strong>
+                        <div style="margin: 4px 0; font-family: monospace; font-size:0.8rem; background:rgba(0,0,0,0.2); padding:6px; border-radius:6px; line-height: 1.4;">
+                            ${diffsSteps.join('<br>')}
+                        </div>
+                        <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                            ${this.renderMath(`\\sum (x_i - \\bar{x})^2 = ${this.round(sumSqDiff)}`)}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>3.2 Varianza:</strong>
+                        <div style="margin-top: 4px;">
+                            <em>Muestral (s^2 - para muestras):</em>
+                            <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                                ${this.renderMath(`s^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n - 1} = \\frac{${this.round(sumSqDiff)}}{${n - 1}} = ${this.round(sampleVar)}`)}
+                            </div>
+                            <em>Poblacional (\\sigma^2 - para toda la población):</em>
+                            <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                                ${this.renderMath(`\\sigma^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n} = \\frac{${this.round(sumSqDiff)}}{${n}} = ${this.round(popVar)}`)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <strong>3.3 Desviación Estándar:</strong>
+                        <div style="margin-top: 4px;">
+                            <em>Muestral (s):</em>
+                            <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                                ${this.renderMath(`s = \\sqrt{s^2} = \\sqrt{${this.round(sampleVar)}} = ${this.round(sampleStd)}`)}
+                            </div>
+                            <em>Poblacional (\\sigma):</em>
+                            <div class="math-expr" style="margin: 6px 0; text-align:center;">
+                                ${this.renderMath(`\\sigma = \\sqrt{\\sigma^2} = \\sqrt{${this.round(popVar)}} = ${this.round(popStd)}`)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; font-size:0.8rem; color:var(--text-secondary); font-style:italic;">
+                        *Nota: El Rango es de ${this.round(range)} (Mín = ${this.round(min)}, Máx = ${this.round(max)}).
+                    </div>
+                </div>
+            </div>
+        `;
+
+        resultsEl.innerHTML = html;
+        resultsEl.classList.remove('hidden');
+    },
+
+    getMedianOfArray(arr) {
+        const len = arr.length;
+        if (len === 0) return 0;
+        if (len % 2 !== 0) {
+            return arr[Math.floor(len / 2)];
+        } else {
+            return (arr[len / 2 - 1] + arr[len / 2]) / 2;
+        }
+    },
+
+    round(num) {
+        return Math.round(num * 10000) / 10000;
+    },
+
+    renderMath(expr) {
+        if (typeof katex !== 'undefined') {
+            return katex.renderToString(expr, { throwOnError: false, displayMode: true });
+        }
+        return `$$ ${expr} $$`;
+    }
+};
+
+const NotesEditor = {
+    STORAGE_KEY: 'studyhub_course_notes',
+    currentNoteId: '__general__',
+    saveTimer: null,
+    layout: 'split', // 'split' | 'editor' | 'preview'
+    
+    initView() {
+        this.populateCourseSelector();
+        this.loadNote(this.currentNoteId);
+        this.updateLayoutUI();
+    },
+
+    populateCourseSelector() {
+        const select = document.getElementById('notes-course-select');
+        if (!select) return;
+
+        select.innerHTML = '<option value="__general__">📓 Notas Generales</option>';
+
+        const packs = EngineStorage.getAllPacks();
+        packs.forEach(pack => {
+            const opt = document.createElement('option');
+            opt.value = pack.id;
+            opt.textContent = `📚 ${pack.title || pack.id}`;
+            select.appendChild(opt);
+        });
+
+        select.value = this.currentNoteId;
+    },
+
+    loadNote(id) {
+        this.currentNoteId = id;
+        
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = null;
+        }
+
+        let text = '';
+        if (id === '__general__') {
+            text = localStorage.getItem('hub_general_notes') || '';
+        } else {
+            text = HubStorage.getCourseNotes(id);
+        }
+
+        const textarea = document.getElementById('notes-textarea');
+        if (textarea) {
+            textarea.value = text;
+            this.updateCharCount(text.length);
+        }
+
+        this.renderPreview(text);
+
+        const badge = document.getElementById('notes-autosave-indicator');
+        if (badge) badge.classList.remove('visible');
+    },
+
+    saveNote() {
+        const textarea = document.getElementById('notes-textarea');
+        if (!textarea) return;
+        const text = textarea.value;
+
+        if (this.currentNoteId === '__general__') {
+            localStorage.setItem('hub_general_notes', text);
+        } else {
+            HubStorage.saveCourseNotes(this.currentNoteId, text);
+        }
+
+        const badge = document.getElementById('notes-autosave-indicator');
+        if (badge) {
+            badge.classList.add('visible');
+            setTimeout(() => {
+                if (!this.saveTimer) {
+                    badge.classList.remove('visible');
+                }
+            }, 2000);
+        }
+    },
+
+    onInput() {
+        const textarea = document.getElementById('notes-textarea');
+        if (!textarea) return;
+        const text = textarea.value;
+
+        this.updateCharCount(text.length);
+        this.renderPreview(text);
+
+        const badge = document.getElementById('notes-autosave-indicator');
+        if (badge) {
+            badge.classList.remove('visible');
+        }
+
+        if (this.saveTimer) clearTimeout(this.saveTimer);
+        this.saveTimer = setTimeout(() => {
+            this.saveNote();
+            this.saveTimer = null;
+        }, 500);
+    },
+
+    onKeydown(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const textarea = e.target;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            textarea.value = text.substring(0, start) + '    ' + text.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 4;
+            this.onInput();
+        }
+        
+        if (e.ctrlKey && e.key === 'b') {
+            e.preventDefault();
+            this.insert('bold');
+        }
+        
+        if (e.ctrlKey && e.key === 'i') {
+            e.preventDefault();
+            this.insert('italic');
+        }
+    },
+
+    updateCharCount(len) {
+        const countEl = document.getElementById('notes-char-count');
+        if (countEl) {
+            countEl.textContent = `${len} ${len === 1 ? 'carácter' : 'caracteres'}`;
+        }
+    },
+
+    renderPreview(text) {
+        const preview = document.getElementById('notes-preview');
+        if (!preview) return;
+
+        const html = this._renderKaTeXAndMarkdown(text);
+        preview.innerHTML = html;
+    },
+
+    clearNote() {
+        if (confirm('¿Estás seguro de que deseas borrar todo el contenido de esta nota?')) {
+            const textarea = document.getElementById('notes-textarea');
+            if (textarea) {
+                textarea.value = '';
+                this.onInput();
+            }
+        }
+    },
+
+    exportMd() {
+        const textarea = document.getElementById('notes-textarea');
+        if (!textarea) return;
+        const text = textarea.value;
+        if (!text) {
+            alert('La nota está vacía.');
+            return;
+        }
+
+        let fileName = 'nota-general.md';
+        if (this.currentNoteId !== '__general__') {
+            const select = document.getElementById('notes-course-select');
+            const courseName = select ? select.options[select.selectedIndex].text.replace(/^[^\w]*/, '').trim() : 'nota';
+            fileName = `${courseName.toLowerCase().replace(/[\s\W]+/g, '-')}.md`;
+        }
+
+        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    toggleLayout() {
+        if (this.layout === 'split') {
+            this.layout = 'editor';
+        } else if (this.layout === 'editor') {
+            this.layout = 'preview';
+        } else {
+            this.layout = 'split';
+        }
+        this.updateLayoutUI();
+    },
+
+    updateLayoutUI() {
+        const pane = document.getElementById('notes-split-pane');
+        const btn = document.getElementById('notes-layout-btn');
+        if (!pane) return;
+
+        pane.classList.remove('layout-split', 'layout-editor', 'layout-preview');
+        
+        if (this.layout === 'split') {
+            pane.classList.add('layout-split');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-table-columns"></i>';
+        } else if (this.layout === 'editor') {
+            pane.classList.add('layout-editor');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        } else {
+            pane.classList.add('layout-preview');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        }
+    },
+
+    insert(type) {
+        const textarea = document.getElementById('notes-textarea');
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selectedText = text.substring(start, end);
+        
+        let before = text.substring(0, start);
+        let after = text.substring(end);
+        let insertText = '';
+        let cursorOffset = 0;
+
+        switch(type) {
+            case 'bold':
+                insertText = `**${selectedText || 'texto'}**`;
+                cursorOffset = selectedText ? insertText.length : 2;
+                break;
+            case 'italic':
+                insertText = `*${selectedText || 'texto'}*`;
+                cursorOffset = selectedText ? insertText.length : 1;
+                break;
+            case 'strike':
+                insertText = `~~${selectedText || 'texto'}~~`;
+                cursorOffset = selectedText ? insertText.length : 2;
+                break;
+            case 'h1':
+                insertText = `\n# ${selectedText || 'Encabezado 1'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'h2':
+                insertText = `\n## ${selectedText || 'Encabezado 2'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'h3':
+                insertText = `\n### ${selectedText || 'Encabezado 3'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'ul':
+                insertText = `\n- ${selectedText || 'Elemento'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'ol':
+                insertText = `\n1. ${selectedText || 'Elemento'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'quote':
+                insertText = `\n> ${selectedText || 'Cita'}`;
+                cursorOffset = insertText.length;
+                break;
+            case 'hr':
+                insertText = `\n---\n`;
+                cursorOffset = insertText.length;
+                break;
+            case 'code':
+                insertText = `\`${selectedText || 'código'}\``;
+                cursorOffset = selectedText ? insertText.length : 1;
+                break;
+            case 'codeblock':
+                insertText = `\n\`\`\`javascript\n${selectedText || '// código aquí'}\n\`\`\`\n`;
+                cursorOffset = selectedText ? insertText.length : 16;
+                break;
+            case 'math':
+                insertText = `$${selectedText || 'E = mc^2'}$`;
+                cursorOffset = selectedText ? insertText.length : 1;
+                break;
+            case 'mathblock':
+                insertText = `\n$$\n${selectedText || '\\int_{a}^{b} x^2 dx'}\n$$\n`;
+                cursorOffset = selectedText ? insertText.length : 4;
+                break;
+        }
+
+        textarea.value = before + insertText + after;
+        textarea.focus();
+        
+        const newCursorPos = start + cursorOffset;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        
+        this.onInput();
+    },
+
+    _parseMarkdown(text) {
+        if (!text) return '';
+        let html = text;
+        
+        html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+            return `<pre><code>${code.trim()}</code></pre>`;
+        });
+        
+        html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        
+        html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+        html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+        
+        html = html.replace(/^&gt; (.*?)$/gm, '<blockquote>$1</blockquote>');
+        
+        html = html.replace(/^---$/gm, '<hr>');
+        
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        
+        html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+        
+        html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+        
+        html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li>$1</li>');
+        
+        html = html.replace(/^\s*\d+\.\s+(.*?)$/gm, '<li-ol>$1</li-ol>');
+        html = html.replace(/<li-ol>(.*?)<\/li-ol>/g, '<li>$1</li>');
+
+        const lines = html.split('\n');
+        let inUl = false;
+        const parsedLines = lines.map((line) => {
+            const isLi = line.trim().startsWith('<li>') && line.trim().endsWith('</li>');
+            
+            if (isLi) {
+                if (!inUl) {
+                    inUl = true;
+                    return '<ul>' + line;
+                }
+                return line;
+            } else {
+                let prefix = '';
+                if (inUl) {
+                    inUl = false;
+                    prefix = '</ul>';
+                }
+                
+                const blockTags = ['<h', '<pre', '<blockquote', '<hr', '<ul', '<ol', '<li', '<div'];
+                const trimmed = line.trim();
+                if (!trimmed) return prefix;
+                
+                const isBlock = blockTags.some(tag => trimmed.startsWith(tag));
+                if (isBlock) return prefix + line;
+                return prefix + `<p>${line}</p>`;
+            }
+        });
+        
+        html = parsedLines.join('\n');
+        if (inUl) html += '</ul>';
+        
+        return html;
+    },
+
+    _renderKaTeXAndMarkdown(text) {
+        if (!text) {
+            return `<div class="notes-preview-empty">
+                <i class="fa-solid fa-feather" style="font-size:2.5rem;opacity:0.15;display:block;margin-bottom:0.75rem;"></i>
+                Empieza a escribir para ver la vista previa aquí...
+            </div>`;
+        }
+
+        const mathPlaceholders = [];
+        let tempText = text;
+
+        tempText = tempText.replace(/\$\$([\s\S]+?)\$\$/g, (match, mathContent) => {
+            const index = mathPlaceholders.length;
+            mathPlaceholders.push({
+                type: 'block',
+                content: mathContent
+            });
+            return `%%MATH_PLACEHOLDER_${index}%%`;
+        });
+
+        tempText = tempText.replace(/\$([^\$\s](?:[^\$]*?[^\$\s])?)\$/g, (match, mathContent) => {
+            const index = mathPlaceholders.length;
+            mathPlaceholders.push({
+                type: 'inline',
+                content: mathContent
+            });
+            return `%%MATH_PLACEHOLDER_${index}%%`;
+        });
+
+        let html = this._parseMarkdown(tempText);
+
+        html = html.replace(/%%MATH_PLACEHOLDER_(\d+)%%/g, (match, idStr) => {
+            const id = parseInt(idStr, 10);
+            const placeholder = mathPlaceholders[id];
+            if (!placeholder) return match;
+
+            try {
+                if (typeof katex !== 'undefined') {
+                    const isBlock = placeholder.type === 'block';
+                    return katex.renderToString(placeholder.content, {
+                        displayMode: isBlock,
+                        throwOnError: false
+                    });
+                } else {
+                    return placeholder.type === 'block' 
+                        ? `<div class="math-fallback">$$\n${placeholder.content}\n$$</div>`
+                        : `<span class="math-fallback">$${placeholder.content}$</span>`;
+                }
+            } catch (err) {
+                console.error("KaTeX error", err);
+                return `<span class="math-error">${placeholder.content}</span>`;
+            }
+        });
+
+        return html;
+    }
 };
 
 const hubApp = {
@@ -3582,6 +5057,10 @@ const hubApp = {
         } else {
             this.stopCamera();
         }
+
+        if (tabName === 'converter') {
+            UnitConverter.initView();
+        }
     },
 
     updateSolverGraph() {
@@ -4210,6 +5689,20 @@ const hubApp = {
                 }
             }
         });
+
+        // Global Search keyboard shortcuts: '/' to open, Escape to close
+        document.addEventListener('keydown', (e) => {
+            const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable;
+            
+            if (e.key === '/' && !isTyping) {
+                e.preventDefault();
+                GlobalSearch.open();
+            }
+            
+            if (e.key === 'Escape') {
+                GlobalSearch.close();
+            }
+        });
     },
 
     handleSearchResult(courseId, moduleId, type) {
@@ -4496,11 +5989,11 @@ const hubApp = {
         } else {
             document.body.classList.remove('chalkboard-mode');
         }
-
         if (viewId === 'view-analiticas')    this.loadAnalytics();
         if (viewId === 'view-configuracion') this.loadApiConfigForm();
         if (viewId === 'view-python-lab')    this.initPythonLab();
         if (viewId === 'view-srs')           SRSEngine.initView();
+        if (viewId === 'view-notas')         NotesEditor.initView();
     },
 
     goHome() {
@@ -5744,6 +7237,82 @@ const hubApp = {
                 .card:hover { border-color: #06b6d4 !important; box-shadow: 0 0 20px rgba(6, 182, 212, 0.25), 0 0 40px rgba(217, 70, 239, 0.1) !important; }
                 .glass-panel { border-color: rgba(6, 182, 212, 0.20) !important; }
                 .logo i { text-shadow: 0 0 15px currentColor; }
+            `
+        },
+
+        // ─── 9. DAYLIGHT (MODO CLARO) ──────────────────────────────
+        'daylight': {
+            id: 'daylight',
+            name: '☀️ Daylight (Claro)',
+            desc: 'Modo claro minimalista premium. Estilo Notion/Linear.',
+            swatches: ['#ffffff', '#f8fafc', '#3b82f6', '#1e293b'],
+            vars: {
+                '--bg-color':      '#f8fafc',
+                '--text-primary':  '#0f172a',
+                '--text-secondary':'#475569',
+                '--primary':       '#3b82f6',
+                '--primary-hover': '#2563eb',
+                '--success':       '#10b981',
+                '--danger':        '#ef4444',
+                '--card-bg':       'rgba(255, 255, 255, 0.85)',
+                '--glass-border':  'rgba(226, 232, 240, 0.8)',
+                '--glass-shadow':  '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+            },
+            extraCSS: `
+                body { background-color: #f8fafc !important; color: #0f172a !important; }
+                .sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0 !important; }
+                .sidebar .logo { color: #0f172a !important; }
+                .sidebar .logo i { color: #3b82f6 !important; }
+                .sidebar .logo h1 { color: #0f172a !important; }
+                .sidebar-nav .nav-item { color: #475569 !important; }
+                .sidebar-nav .nav-item i { color: #64748b !important; }
+                .sidebar-nav .nav-item:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+                .sidebar-nav .nav-item.active { background: #eff6ff !important; color: #1d4ed8 !important; border-right: 3px solid #3b82f6 !important; }
+                .sidebar-nav .nav-item.active i { color: #3b82f6 !important; }
+                .glass-panel { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important; backdrop-filter: none !important; }
+                .card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important; }
+                .card:hover { border-color: #3b82f6 !important; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1) !important; transform: translateY(-2px); }
+                h1, h2, h3, h4, h5, h6 { color: #0f172a !important; }
+                .hero h2 { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+                .version-tag { color: #64748b !important; }
+                .btn.primary { background: #3b82f6 !important; color: #ffffff !important; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important; }
+                .btn.primary:hover { background: #2563eb !important; }
+                .btn.secondary { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #e2e8f0 !important; }
+                .btn.secondary:hover { background: #e2e8f0 !important; color: #0f172a !important; }
+                .form-control, select, input { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+                .form-control:focus, select:focus, input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important; }
+                .calculator-screen { background: #f8fafc !important; border: 4px solid #94a3b8 !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06) !important; }
+                .calculator-screen div { color: #334155 !important; }
+                .calculator-screen .math-display { color: #0f172a !important; text-shadow: none !important; }
+                .calculator-screen input { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+                .virtual-key { background: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #334155 !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; }
+                .virtual-key:hover { background: #f8fafc !important; border-color: #cbd5e1 !important; }
+                .virtual-key.operator { background: #f1f5f9 !important; color: #0f172a !important; }
+                .virtual-key.action { background: #eff6ff !important; color: #2563eb !important; border-color: #bfdbfe !important; }
+                .scratch-container-wrapper { background: #ffffff !important; border: 4px solid #94a3b8 !important; }
+                .srs-card-front, .srs-card-back { background: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important; }
+                .srs-card-tag { background: #eff6ff !important; color: #2563eb !important; }
+                .srs-rating-btn { border: 1px solid #cbd5e1 !important; }
+                .notes-textarea { color: #0f172a !important; background: #ffffff !important; }
+                .notes-editor-pane, .notes-preview-pane { background: #ffffff !important; border-color: #e2e8f0 !important; }
+                .notes-pane-header { background: #f8fafc !important; border-bottom-color: #e2e8f0 !important; color: #475569 !important; }
+                .notes-preview-content { color: #334155 !important; }
+                .notes-preview-content h1, .notes-preview-content h2, .notes-preview-content h3 { color: #0f172a !important; border-bottom-color: #e2e8f0 !important; }
+                .notes-preview-content blockquote { background: #f8fafc !important; border-left-color: #3b82f6 !important; color: #475569 !important; }
+                .notes-preview-content code { background: #f1f5f9 !important; }
+                .notes-preview-content pre { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+                .notes-preview-content pre code { color: #334155 !important; }
+                .notes-tb-btn { background: #ffffff !important; border-color: #cbd5e1 !important; color: #475569 !important; }
+                .notes-tb-btn:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+                ::-webkit-scrollbar-thumb { background: #cbd5e1 !important; }
+                ::-webkit-scrollbar-thumb:hover { background: #94a3b8 !important; }
+                .search-modal-container { background: #ffffff !important; border-color: #e2e8f0 !important; }
+                .search-modal-header { border-bottom-color: #e2e8f0 !important; }
+                #global-search-input { color: #0f172a !important; }
+                .search-item:hover, .search-item.selected { background: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+                .search-item-title { color: #0f172a !important; }
+                .search-item-subtitle { color: #475569 !important; }
+                .search-modal-footer { background: #f8fafc !important; border-top-color: #e2e8f0 !important; }
             `
         },
     },

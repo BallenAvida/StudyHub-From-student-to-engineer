@@ -51,6 +51,10 @@
                     <i class="fa-solid fa-book"></i>
                     <span>Mis Cursos</span>
                 </a>
+                <a href="#" class="nav-item" onclick="GlobalSearch.open(event)">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Buscar <kbd style="font-size:0.65rem; background:rgba(255,255,255,0.15); padding:1px 4px; border-radius:3px; margin-left:6px;">/</kbd></span>
+                </a>
                 <a href="#" class="nav-item" data-target="view-analiticas">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Analíticas</span>
@@ -773,11 +777,19 @@ C) x = 0, x = 5" style="width: 100%; height: 180px; background: rgba(0,0,0,0.3);
 
                     <!-- Deck selector + stats row -->
                     <div class="srs-top-bar glass-panel" style="margin-bottom:1.5rem;">
-                        <div class="srs-deck-selector">
+                        <div class="srs-deck-selector" style="flex-grow:1;">
                             <label style="color:var(--text-secondary);font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Mazo</label>
-                            <select id="srs-deck-select" class="form-control" style="margin-top:4px;" onchange="SRSEngine.loadDeck(this.value)">
-                                <option value="">— Elige un curso —</option>
-                            </select>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-top:4px;">
+                                <select id="srs-deck-select" class="form-control" style="margin:0; flex-grow:1;" onchange="SRSEngine.loadDeck(this.value)">
+                                    <option value="">— Elige un mazo —</option>
+                                </select>
+                                <button class="btn secondary" onclick="SRSEngine.showManager()" style="padding: 10px 12px; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 6px; white-space: nowrap;" title="Gestionar tarjetas creadas por mí">
+                                    <i class="fa-solid fa-list-check"></i> Gestionar
+                                </button>
+                                <button class="btn secondary" onclick="SRSEngine.showImporter()" style="padding: 10px 12px; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 6px; white-space: nowrap;" title="Importar o Exportar mazos JSON">
+                                    <i class="fa-solid fa-file-import"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="srs-stats-row">
                             <div class="srs-stat-pill new">
@@ -872,6 +884,67 @@ C) x = 0, x = 5" style="width: 100%; height: 180px; background: rgba(0,0,0,0.3);
                                         <span>Fácil</span>
                                         <small id="srs-hint-easy">~4 días</small>
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- SRS Custom Card Manager Panel -->
+                    <div id="srs-manager-panel" class="glass-panel hidden" style="margin-top: 1rem; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary);"><i class="fa-solid fa-gears"></i> Administrar Tarjetas Creadas</h3>
+                            <button class="btn secondary" onclick="SRSEngine.hideManager()" style="padding: 4px 8px; font-size: 0.75rem; margin: 0;">Volver al Repaso</button>
+                        </div>
+
+                        <!-- Form to create a new card -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; margin-bottom: 1.25rem;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--text-primary);">Añadir Nueva Tarjeta</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Pregunta (Frente):</label>
+                                        <input type="text" id="srs-new-front" placeholder="Ej: ¿Qué es un espacio vectorial?" style="width: 100%; padding: 6px; margin-top: 3px;">
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Respuesta (Reverso):</label>
+                                        <input type="text" id="srs-new-back" placeholder="Ej: Un conjunto de elementos equipados con..." style="width: 100%; padding: 6px; margin-top: 3px;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+                                    <div style="width: 200px;">
+                                        <label style="font-size: 0.75rem; color: var(--text-secondary);">Categoría / Tema:</label>
+                                        <input type="text" id="srs-new-domain" placeholder="Ej: Álgebra" style="width: 100%; padding: 6px; margin-top: 3px;">
+                                    </div>
+                                    <button class="btn primary" onclick="SRSEngine.addCustomCard()" style="padding: 8px 15px; margin: 0; font-size: 0.8rem; margin-top: 15px;">Guardar Tarjeta</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cards List -->
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: bold;">Mis Tarjetas (<span id="srs-custom-count">0</span>):</div>
+                        <div id="srs-custom-cards-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px; background: rgba(0,0,0,0.15);">
+                            <!-- Inyectado por JS -->
+                        </div>
+                    </div>
+
+                    <!-- SRS Importer/Exporter Panel -->
+                    <div id="srs-importer-panel" class="glass-panel hidden" style="margin-top: 1rem; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary);"><i class="fa-solid fa-file-import"></i> Importar / Exportar Mazos</h3>
+                            <button class="btn secondary" onclick="SRSEngine.hideImporter()" style="padding: 4px 8px; font-size: 0.75rem; margin: 0;">Volver al Repaso</button>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px;">
+                                <h4 style="margin: 0 0 6px 0; font-size: 0.9rem; color: var(--text-primary);">Exportar Mazo</h4>
+                                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">Descarga tus tarjetas personalizadas en un archivo JSON para tener copia de seguridad o compartirlas.</p>
+                                <button class="btn primary" onclick="SRSEngine.exportCustomCards()" style="padding: 8px 12px; margin: 0; font-size: 0.8rem;">Exportar Mazo (.json)</button>
+                            </div>
+
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px;">
+                                <h4 style="margin: 0 0 6px 0; font-size: 0.9rem; color: var(--text-primary);">Importar Mazo</h4>
+                                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 10px;">Sube un archivo JSON de tarjetas para unirlas a tu mazo actual.</p>
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <input type="file" id="srs-import-file-input" accept=".json" style="font-size: 0.8rem; background: transparent; border: none; padding: 0;">
+                                    <button class="btn primary" onclick="SRSEngine.importCustomCards()" style="padding: 8px 12px; margin: 0; font-size: 0.8rem;">Importar</button>
                                 </div>
                             </div>
                         </div>
@@ -1053,9 +1126,13 @@ C) x = 0, x = 5" style="width: 100%; height: 180px; background: rgba(0,0,0,0.3);
                 <button class="solver-tab-btn" id="btn-tab-camera" onclick="hubApp.switchSolverTab('camera')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
                     <i class="fa-solid fa-camera"></i> Cámara
                 </button>
+                <button class="solver-tab-btn" id="btn-tab-stats" onclick="hubApp.switchSolverTab('stats')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
+                    <i class="fa-solid fa-chart-simple"></i> Estadísticas
+                </button>
+                <button class="solver-tab-btn" id="btn-tab-converter" onclick="hubApp.switchSolverTab('converter')" style="background:none; border:none; color:var(--text-secondary); font-size:0.85rem; font-weight:600; padding:4px 10px; cursor:pointer; border-bottom:2px solid transparent;">
+                    <i class="fa-solid fa-right-left"></i> Convertidor
+                </button>
             </div>
-        </div>
-        
         <div class="solver-content">
             <!-- PESTAÑA 1: RESOLUTOR -->
             <div id="solver-panel-solve" class="solver-tab-panel">
@@ -1265,7 +1342,97 @@ C) x = 0, x = 5" style="width: 100%; height: 180px; background: rgba(0,0,0,0.3);
                             <i class="fa-solid fa-camera-rotate"></i>
                         </button>
                     </div>
+            </div>
+
+            <!-- PESTAÑA 5: ESTADÍSTICAS -->
+            <div id="solver-panel-stats" class="solver-tab-panel hidden">
+                <p class="solver-desc" style="margin-bottom: 0.75rem;">Ingresa una lista de números separados por comas para calcular estadísticas descriptivas.</p>
+                
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="stats-input" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: bold;">Datos (separados por comas):</label>
+                        <input type="text" id="stats-input" placeholder="Ej: 12, 15, 12, 18, 22, 15, 30, 24" autocomplete="off" style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 6px; padding: 8px 12px; font-size: 0.9rem; color: #a7f3d0; outline: none; font-family: monospace; width: 100%;">
+                    </div>
+                    
+                    <button class="btn primary" onclick="StatsCalculator.calculate()" style="width: 100%; margin-top: 12px; margin-bottom: 0; padding: 10px; font-weight: bold; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fa-solid fa-square-root-variable"></i> CALCULAR ESTADÍSTICAS
+                    </button>
                 </div>
+
+                <!-- Resultados de las estadísticas -->
+                <div id="stats-results" class="hidden" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Aquí se inyectan los resultados con JS -->
+            </div>
+
+            <!-- PESTAÑA 6: CONVERTIDOR DE UNIDADES -->
+            <div id="solver-panel-converter" class="solver-tab-panel hidden">
+                <p class="solver-desc" style="margin-bottom: 0.75rem;">Conversión instantánea bidireccional entre diferentes unidades físicas.</p>
+                
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <label for="converter-category" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: bold; display: block; margin-bottom: 4px;">Categoría:</label>
+                        <select id="converter-category" onchange="UnitConverter.onCategoryChange(this.value)" class="form-control" style="width: 100%;">
+                            <option value="length">📏 Longitud</option>
+                            <option value="mass">⚖️ Masa / Peso</option>
+                            <option value="temperature">🌡️ Temperatura</option>
+                            <option value="speed">🚀 Velocidad</option>
+                            <option value="area">📐 Área</option>
+                            <option value="volume">🥛 Volumen</option>
+                            <option value="energy">⚡ Energía</option>
+                        </select>
+                    </div>
+
+                    <!-- Dual conversion panels -->
+                    <div style="display: flex; gap: 15px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
+                        <!-- Value Left -->
+                        <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
+                            <input type="number" id="converter-val-left" value="1" step="any" oninput="UnitConverter.convert('left')" style="width: 100%; font-family: monospace; font-size: 1.1rem; padding: 8px;">
+                            <select id="converter-unit-left" onchange="UnitConverter.convert('left')" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 4px 8px; height: auto; margin-top: 3px;">
+                                <!-- Populate via JS -->
+                            </select>
+                        </div>
+
+                        <!-- Equal sign / arrows -->
+                        <div style="text-align: center; font-size: 1.2rem; color: var(--primary);">
+                            <i class="fa-solid fa-right-left"></i>
+                        </div>
+
+                        <!-- Value Right -->
+                        <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
+                            <input type="number" id="converter-val-right" value="" step="any" oninput="UnitConverter.convert('right')" style="width: 100%; font-family: monospace; font-size: 1.1rem; padding: 8px;">
+                            <select id="converter-unit-right" onchange="UnitConverter.convert('left')" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 4px 8px; height: auto; margin-top: 3px;">
+                                <!-- Populate via JS -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step explanation card -->
+                <div id="converter-steps" class="glass-panel" style="padding: 12px; border-radius: 8px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; background: rgba(255,255,255,0.01);">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE BÚSQUEDA GLOBAL -->
+    <div id="global-search-modal" class="search-modal-overlay hidden" onclick="GlobalSearch.close()">
+        <div class="search-modal-container glass-panel" onclick="event.stopPropagation()">
+            <div class="search-modal-header">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="global-search-input" placeholder="Buscar cursos, temas, flashcards, notas..." autocomplete="off" oninput="GlobalSearch.onInput()" onkeydown="GlobalSearch.onKeydown(event)">
+                <button class="search-close-btn" onclick="GlobalSearch.close()" title="Cerrar (Esc)"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="global-search-results" class="search-results-list">
+                <div class="search-empty-state">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size:2rem; opacity:0.15; margin-bottom: 8px;"></i>
+                    Escribe para buscar...
+                </div>
+            </div>
+            <div class="search-modal-footer">
+                <span><kbd>↑↓</kbd> Navegar</span>
+                <span><kbd>Enter</kbd> Seleccionar</span>
+                <span><kbd>Esc</kbd> Cerrar</span>
             </div>
         </div>
     </div>
